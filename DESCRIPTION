@@ -1,0 +1,43 @@
+Package: RiskManagement
+Title: Risk management workflow for guarantee activity
+Version: 0.0.0.9000
+Authors@R: person('MARIUS', 'TITA', email = 'marius.tita81@gmail.com', role = c('cre', 'aut'))
+Description: This is a shiny app that automates processes for guarantee risk management. 
+  It handles credit risk provisions, IFRS9 provisions and other specific data management for a guarantee institution.
+  This application stores data within files and not a database, as data stored is not semnifically large.
+License: MIT + file LICENSE
+Imports: 
+    broom,
+    bs4Dash,
+    config,
+    dplyr,
+    DT,
+    ggplot2,
+    glmnet,
+    golem,
+    htmltools,
+    janitor,
+    knitr,
+    lubridate,
+    magrittr,
+    pkgload,
+    purrr,
+    qdapRegex,
+    readr,
+    readxl,
+    renv,
+    rlang,
+    rmarkdown,
+    shiny,
+    shinybusy,
+    shinyFeedback,
+    shinyjs,
+    shinyWidgets,
+    stringr,
+    tibble,
+    tidyr
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+URL: https://github.com/fizic37/Risk-Management
+BugReports: https://github.com/fizic37/Risk-Management/issues

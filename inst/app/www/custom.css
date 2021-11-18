@@ -1,0 +1,15 @@
+/* Modifica backround-ul butonului de placeholder din inputFile */
+  .form-control {background-color: #fff !important;}
+      
+/* Modifica culoarea progress-bar-ului */
+  .progress-bar {background-color: #20a7c9;}
+  
+/* Modifica culoarea de backround a tab-urilor shiny:tabPanel - se gasesc in IFRS sidebar */ 
+  .nav-pills .nav-link.active, .nav-pills .show>.nav-link {
+    color: #fff;
+    background-color: #20a7c9;
+}
+
+
+      
+      

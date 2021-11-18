@@ -1,0 +1,54 @@
+---
+title: ""
+output: 
+  word_document:
+    reference_docx: template_provizioane_plati.docx
+params:
+  luna_curenta: ""
+  an_curent: ""
+  nr_garantii: ""
+  provizion_curent: 0
+  provizion_anterior: 0
+  luna_anterioara: ""
+  an_anterior: ""
+  plati_brute_curente: 0
+  recuperari_totale_curente: 0
+  admise_garantie_curente: 0
+  data_curenta: "31.12.2020"
+  data_anterioara: "30.12.2020"
+---
+
+
+**DIRECTIA RISC**  
+**DATA: **  
+**NR RRS_R                                                                    **    
+**Catre: Departamentul Economic                                               **  
+**Ref: Constituirea, regularizarea şi utilizarea provizioanelor specifice de risc de garantare, pentru luna 
+`r paste(params$luna_curenta, params$an_curent)`.**  
+
+Pentru luna `r paste(params$luna_curenta, params$an_curent)`, provizioanele specifice de risc de garantare s-au constituit și regularizat în baza *Normei metodologice nr.19/2010 privind clasificarea garanțiilor, precum și constituirea, regularizarea și utilizarea provizioanelor specifice de risc de garantare, Ed.3, Rev.1*.
+
+În urma aplicarii metodologiei de calcul, a rezultat faptul că în luna `r paste(params$luna_curenta, params$an_curent)` au fost înregistrate provizioane aferente garantiilor la care au fost efectuate plati catre finantatori pentru un numar de `r params$nr_garantii` garanții, pentru care s-au constituit provizioane specifice de risc de garantare în sumă de `r formatC(x = params$provizion_curent,digits = 0,format = "f",decimal.mark = ",",big.mark = ".")` RON, rezultând o crestere netă de luna `r formatC(x = (params$provizion_curent - params$provizion_anterior),digits = 0,format = "f",decimal.mark = ",",big.mark = ".")` RON față de `r paste(params$luna_anterioara ,params$an_anterior)`.  
+
+În determinarea necesarului de provizion au fost avuți în vedere următorii indicatori la `r paste(params$luna_curenta, params$an_curent)`:  
+
+**1. Plată netă** = Plati efective – Total recuperari =  
+ 		**`r formatC(x=params$plati_brute_curente,digits = 0,format = "f",decimal.mark = ",",big.mark = ".")` RON** – **`r formatC(x=params$recuperari_totale_curente,digits = 0,format = "f",decimal.mark = ",",big.mark = ".")` RON** =
+**`r formatC(x = params$plati_brute_curente - params$recuperari_totale_curente,digits = 0,format = "f",decimal.mark = ",",big.mark = ".")` RON**  
+
+
+**2. Valoare admisă în garantie a accesoriilor eligibile = `r formatC(x = params$admise_garantie_curente,format = "f",digits = 0,decimal.mark = ",",big.mark = ".")` RON**    
+
+Prin regularizarea între nivelul necesarului de provizioane la `r params$data_curenta` şi nivelul provizioanelor existente în sold la `r params$data_anterioara`, rezultă:  
+
+**Provizion de regularizat (in echivalent RON) = Provizion necesar de constituit la `r params$data_curenta` (in echivalent RON) - Provizion existent la `r params$data_anterioara` (in echivalent RON)**  
+
+**`r formatC(x = params$provizion_curent,digits = 0,format = "f",decimal.mark = ",",big.mark = ".")` - `r formatC(x = params$provizion_anterior,digits = 0,format = "f",decimal.mark = ",",big.mark = ".")` = `r formatC(x = params$provizion_curent - params$provizion_anterior,digits = 0,format = "f",decimal.mark = ",",big.mark = ".")` RON**  
+
+În conformitate cu prevederile Instructiunii de lucru nr. 50 privind fluxul de înregistrare a popririlor conturilor FNGCIMM SA – IFN pentru contracte/scrisori de garantare emise în baza surselor proprii ale FNGCIMM SA – IFN, vă informăm că în cursul lunii `r paste(params$luna_curenta, params$an_curent)`  următoarele litigii s-au transformat în creanțe motiv pentru care se vor anula provizioanele din litigii întrucât s-au constituit provizioane specifice de risc de garantare (acestea de regăsesc în necesarul de provizioane menționat anterior). 
+
+
+
+
+
+
