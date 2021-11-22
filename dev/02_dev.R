@@ -36,6 +36,11 @@ usethis::use_package("shinyWidgets")
 usethis::use_package("shinyjs")
 usethis::use_package("stringr")
 usethis::use_package("tidyr")
+usethis::use_package("htmltools")
+usethis::use_package("rlang")
+usethis::use_package("tibble")
+usethis::use_package("shinybusy")
+usethis::use_package("rlang")
 
 
 

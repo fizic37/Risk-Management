@@ -29,7 +29,7 @@ RUN Rscript -e 'remotes::install_version("janitor",upgrade="never", version = "2
 RUN Rscript -e 'remotes::install_version("golem",upgrade="never", version = "0.3.1")'
 RUN Rscript -e 'remotes::install_version("glmnet",upgrade="never", version = "4.1-2")'
 RUN Rscript -e 'remotes::install_version("DT",upgrade="never", version = "0.19")'
-RUN Rscript -e 'remotes::install_version("bs4Dash",upgrade="never", version = "2.0.3")'
+RUN Rscript -e 'remotes::install_version("bs4Dash",upgrade="never", version = "2.0.1")'
 RUN Rscript -e 'remotes::install_version("broom",upgrade="never", version = "0.7.10")'
 RUN mkdir /build_zone
 ADD . /build_zone
