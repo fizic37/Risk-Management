@@ -84,7 +84,8 @@ mod_crc_server <- function(input, output, session, vals){
     })
   
   observeEvent(input$data_raport_to_delete,{
-    showModal(modalDialog(title = "ATENTIE", size = "l",
+    showModal(modalDialog(title = div(style="display:inline-block;margin-left: 5%;color: #c99720;",
+                                      "ATENTIE"), size = "l",
                           h3(paste0("Esti sigur ca vrei sa stergi inregistrarile CRC din data de ",
                                     input$data_raport_to_delete," ?"), style = "color: #c92052"),  footer = 
                             tagList(shinyWidgets::actionBttn(inputId = ns("confirm_delete"),label = "Confirm",
@@ -134,28 +135,27 @@ mod_crc_server <- function(input, output, session, vals){
   
   observeEvent(input$data_raport_to_download,{
     
-    showModal(modalDialog(title = "ATENTIE", size = "l",
+    showModal(modalDialog(title = div(style="display:inline-block;margin-left: 10%;color: #c99720;",
+                                      "ATENTIE"), size = "l",
                           h3(paste0("Esti sigur ca vrei sa downloadez CRC la data de ",
                                     input$data_raport_to_download, " ?"), style = "color: #20a7c9"),  footer = 
-                            tagList(shinyWidgets::downloadBttn(outputId = session$ns("confirm_download"),label = "Download",
-                                                               color = "success", size = "md"),
-                                    shinyWidgets::actionBttn(inputId = session$ns("cancel_download"),label = "Cancel",
-                                                             style = "stretch",icon = icon("window-close"),color = "danger",size = "md")
+      tagList(shinyWidgets::downloadBttn(outputId = ns("confirm_download"),label = "Download",
+                                   color = "success", size = "md",style = "stretch"),
+      shinyWidgets::actionBttn(inputId = session$ns("cancel_download"),label = "Cancel",
+                   style = "stretch",icon = icon("window-close"),color = "danger",size = "md")
                             )))
   })
   
   observeEvent(input$cancel_download, {removeModal( session = session ) } )
   
-  observeEvent( input$confirm_download,{
-  
-    output$confirm_download <- downloadHandler(filename = function() {
+  output$confirm_download <- downloadHandler(filename = function() {
       paste0("CRC_database_",  input$data_raport_to_download, ".csv")   },
       content = function(file) {
         readr::write_csv(x = readRDS("R/reactivedata/crc/baza_date_crc.rds") %>%
-                           dplyr::filter(`Data situatie risc global` == as.Date.character(input$data_raport_to_download)),
+        dplyr::filter(`Data situatie risc global` == as.Date.character(input$data_raport_to_download)),
                          file = file)
         removeModal(session = session)  }   )
-  })
+  
     
     
 
