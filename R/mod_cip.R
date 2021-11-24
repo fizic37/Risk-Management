@@ -69,12 +69,14 @@ mod_cip_server <- function(input, output, session) {
 
   observeEvent(input$id_data_raport_to_download,{
      
-    showModal(modalDialog(title = "ATENTIE", size = "l",
+    showModal(modalDialog(title = div(style="display:inline-block;margin-left: 10%;color: #c99720;",
+                                      "ATENTIE"),size = "l",
                         h3(paste0("Esti sigur ca vrei sa downloadezi baza de date CIP raportata la ",
-                                        input$id_data_raport_to_download, " ?"), style = "color: #20a7c9"),  footer = 
-      tagList(shinyWidgets::downloadBttn(outputId = session$ns("down_cip_database"),label = "Download",color = "success", size = "md"),
+                      input$id_data_raport_to_download, " ?"), style = "color: #20a7c9"),  footer = 
+      tagList(shinyWidgets::downloadBttn(outputId = session$ns("down_cip_database"),label = "Download",
+                                         color = "success", size = "md", style = "stretch"),
               shinyWidgets::actionBttn(inputId = session$ns("cancel_download"),label = "Cancel",
-                                       icon = icon("window-close"),color = "danger",size = "md"))))
+                      icon = icon("window-close"),color = "danger",size = "md", style = "stretch"))))
     
     
     
@@ -95,7 +97,34 @@ mod_cip_server <- function(input, output, session) {
     
     })
   
+  observeEvent(input$id_data_raport_to_delete,{
+    
+    showModal(modalDialog(title = div(style="display:inline-block;margin-left: 5%;color: #c99720;",
+                                      "ATENTIE"), size = "l",
+                          h3(paste0("Esti sigur ca vrei sa stergi CIP-ul la data de ",
+                                    input$id_data_raport_to_delete, " ?"), style = "color: #c94220"),  
+                          footer = 
+                            tagList(shinyWidgets::actionBttn(inputId = ns("confirm_delete"),label = "Confirm, sterge inregistrarea",
+                                        icon = icon("check"),color = "success",size = "md", style = "stretch"),
+                                    shinyWidgets::actionBttn(inputId = ns("cancel_delete"),label = "Cancel, close window",
+                                        icon = icon("window-close"),color = "danger",size = "md", style = "stretch")
+                            )))
+  })
   
+  observeEvent(input$cancel_delete,{
+    removeModal(session = session) })
+  
+  
+  observeEvent(input$confirm_delete,{
+    
+    vals_cip$baza_date_cip <- dplyr::filter(readRDS("R/reactivedata/cip/baza_date_cip.rds"),data_raport != 
+                                              as.Date.character(input$id_data_raport_to_delete))
+    removeModal(session = session)
+    
+    shinyFeedback::showToast(type = "success",title = "Deleted",message = "Inregistrarea a fost stearsa cu succes",
+                             .options = list("timeOut"=1500, 'positionClass'="toast-bottom-right", "progressBar" = TRUE))
+    
+  })
     
   # Key observer everytime baza date cip is updated: recalculates view_cip and saves baza_date_cip and view_cip
   # Attention: I save view_cip only when baza date cip is updated, otherwise it would be saved even for the first read
@@ -200,32 +229,7 @@ mod_cip_server <- function(input, output, session) {
   
 
  
-  observeEvent(input$id_data_raport_to_delete,{
   
-    showModal(modalDialog(title = h3("ATENTIE!",style = "color: #ffa500;"), size = "l",
-                          h3(paste0("Esti sigur ca vrei sa stergi CIP-ul la data de ",
-                                    input$id_data_raport_to_delete, " ?"), style = "color: #77547a"),  footer = 
-                            tagList(shinyWidgets::actionBttn(inputId = session$ns("confirm_delete"),label = "Confirm, sterge inregistrarea",
-                                                             icon = icon("check"),color = "success",size = "md"),
-                                    shinyWidgets::actionBttn(inputId = session$ns("cancel_delete"),label = "Cancel, close window",
-                                                             icon = icon("window-close"),color = "danger",size = "md")
-                            )))
-})
-  
-    observeEvent(input$cancel_delete,{
-    removeModal(session = session) })
-  
-  
-    observeEvent(input$confirm_delete,{
-    
-    vals_cip$baza_date_cip <- dplyr::filter(readRDS("R/reactivedata/cip/baza_date_cip.rds"),data_raport != 
-                                              as.Date.character(input$id_data_raport_to_delete))
-    removeModal(session = session)
-    
-    shinyFeedback::showToast(type = "success",title = "Deleted",message = "Inregistrarea a fost stearsa cu succes",
-                             .options = list("timeOut"=1500, 'positionClass'="toast-bottom-right", "progressBar" = TRUE))
-    
-   })
   
 }
  
