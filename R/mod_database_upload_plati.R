@@ -97,11 +97,11 @@ mod_database_upload_plati_server <- function(input, output, session, plati_react
     
     output$output_save_plati <- renderUI({
       fluidRow(column(width = 6,
-      shinyWidgets::actionBttn(inputId = ns("plati_input_save"),icon = icon("save"),size = "sm",
+      shinyWidgets::actionBttn(inputId = ns("plati_input_save"),icon = icon("save"),size = "md",
                    label = "Click aici pentru a salva fisierul uploadat", style = "stretch",color = "success")),
       column(width = 6, downloadLink(outputId = ns("down_plati_upload_prelucrat"),
-                                       label = "Downloadeaza fisierul uploadat prelucrat"),
-             tags$head(tags$style("#database_upload_plati_ui_1-down_plati_upload_prelucrat {color: #20a7c9;}")) ) )})
+                                    label = "Downloadeaza fisierul uploadat prelucrat"),
+             tags$head(tags$style("#database_upload_plati_ui_1-down_plati_upload_prelucrat {color: #c920a7;}")) ) )})
     
     output$down_plati_upload_prelucrat <- downloadHandler(filename = function() {paste0("Plati_provizioane_",
               input$data_plati_input,".csv")},
