@@ -19,11 +19,10 @@ mod_database_upload_plati_ui <- function(id){
           accept = c(".xls", ".xlsx") )  ), 
       column(width = 6, uiOutput( ns("show_plati_date") ))),
       
-      #verbatimTextOutput(ns("diverse")),
       DT::dataTableOutput(ns("sumar_plati_input")),
-      br(),
+      hr(), 
       uiOutput(ns("output_save_plati")),
-      br(),
+      hr(),
       
       uiOutput(ns("show_balanta_parteneri")),
      
