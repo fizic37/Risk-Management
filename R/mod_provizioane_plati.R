@@ -14,8 +14,8 @@ mod_provizioane_plati_ui <- function(id){
     shinybusy::add_busy_spinner(color = "#c92052", position = "bottom-right", timeout = 200),
     shinyFeedback::useShinyFeedback(),
     
-    bs4Dash::box( title = "Regularizare provizion plati", status = "info",  width = 12,
-                  collapsible = T,  collapsed = TRUE,maximizable = TRUE, icon = icon("exchange-alt"),
+    bs4Dash::box( title = "Word- regularizare provizion plati", status = "info",  width = 12,
+                  collapsible = T,  collapsed = TRUE,maximizable = TRUE, icon = icon("file-word"),
                   footer = "Aici se genereaza adresa Word catre Contabilitate privind regularizarea provizioanelor specifice
                   la datele selectate mai sus.",
                   fluidRow(    column( width = 3,
