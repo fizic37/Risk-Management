@@ -14,19 +14,21 @@ mod_database_portofoliu_ui <- function(id){
     
     shinyFeedback::useShinyFeedback(),
     
-    bs4Dash::box(title = "Upload utility files - BI, insolventa", icon = icon("toolbox"),
-      status = "info",  width = 12,  collapsible = TRUE,  collapsed = TRUE,maximizable = T,
-      mod_database_util_files_ui("database_util_files_ui_1"), id = ns("box_utility"),
+    bs4Dash::box(title = "Upload utility files - BI, insolventa", id = ns("box_utility"),
+      icon = icon("toolbox"), status = "info",  width = 12,  collapsible = TRUE,  
+      collapsed = TRUE,maximizable = T, mod_database_util_files_ui("database_util_files_ui_1"), 
       footer = "Aici se uploadeaza date actualizate referitoare la cererile de plata si instiintarile de neplata primite 
       precum si insolventele beneficiarilor."),
     
-    bs4Dash::box(title = "Upload portfolio file", width = 12, icon = icon("file-excel"),
-                 collapsible = T,collapsed = T, maximizable = T, status = "info",
+    bs4Dash::box(title = "Upload portfolio file",  id = ns("box_upload_portofoliu"),
+                 icon = icon("file-excel"),  width = 12,
+                 collapsible = T,collapsed = FALSE, maximizable = T, status = "info",
                  footer =  "Se uploadeaza intregul fisier de solduri disponibil pe fileserver - Provizioane.",
-                 mod_database_portofoliu_upload_ui("database_portofoliu_upload_ui_1"), id = ns("box_upload_portofoliu") ),
+                 mod_database_portofoliu_upload_ui("database_portofoliu_upload_ui_1") ),
       
-    bs4Dash::box( title = "Database portfolio", icon = icon("database"), maximizable = T,
-                        status = "info",width = 12,collapsible = TRUE,collapsed = F,
+    bs4Dash::box( title = "Database portfolio", icon = icon("database"), 
+                  maximizable = T,
+                        status = "info",width = 12,collapsible = TRUE,collapsed = TRUE,
                        
                        DT::dataTableOutput(ns("sinteza_portofoliu")),
                        tags$script(src = "portofoliu_buttons.js"),
@@ -48,11 +50,11 @@ mod_database_portofoliu_ui <- function(id){
                          column(width = 4, br(), actionButton(inputId = ns("start_migration"),width = "250px",
                                           label = "Perform portfolio migration",icon = icon("play"))) ),
                        DT::dataTableOutput(ns("portfolio_migration")), br(),
-                       uiOutput(outputId = ns("show_down_button"))
-                       # Below action button is supposed to act as toggle between exposure migration and unfinished provisions migration
-                       #actionButton(inputId = ns("change_view_migration"),label = "Change Report View",
-                           #         icon = icon("toggle-on"),width = "250px"),
-                        )
+                       uiOutput(outputId = ns("show_down_button"))),
+    
+   bs4Dash::box(title = "Indicatori provizioane non IFRS",id = ns("box_coeficienti_portofoliu"),
+                        status = "info", collapsible = TRUE,collapsed = TRUE, maximizable = T,
+                width = 12, icon = icon("check-double"),   mod_coeficienti_portofoliu_ui("coeficienti_portofoliu_ui_1") )
   )
   
   
@@ -64,24 +66,26 @@ mod_database_portofoliu_ui <- function(id){
 mod_database_portofoliu_server <- function(input, output, session,vals,vals_portofoliu){
   ns <- session$ns
   
- 
- # vals_portofoliu$view1_portofoliu <- readRDS("R/reactivedata/portofoliu/view1_portofoliu.rds")
-  #vals_portofoliu$view2_portofoliu <- readRDS("R/reactivedata/portofoliu/view2_portofoliu.rds")
-  #vals_portofoliu$view3_portofoliu <- readRDS("R/reactivedata/portofoliu/view3_portofoliu.rds")
-  #vals_portofoliu$view4_portofoliu <- readRDS("R/reactivedata/portofoliu/view4_portofoliu.rds")
- 
-  #vals_portofoliu <- reactiveValues( view1_portofoliu =  view1_portofoliu,  view2_portofoliu =  view2_portofoliu,
-      #                               view3_portofoliu = view3_portofoliu, view4_portofoliu = view4_portofoliu)
-  
   observeEvent(input$box_utility, {req(any(input$box_utility$collapsed==FALSE,
                                                 input$box_utility$maximized==TRUE))
+    
     vals$box_selected <- c(vals$box_selected,"box_utility")
   })
   
   observeEvent(input$box_upload_portofoliu, {req(any(input$box_upload_portofoliu$collapsed==FALSE,
                                            input$box_upload_portofoliu$maximized==TRUE))
+    
     vals$box_selected <- c(vals$box_selected,"box_upload_portofoliu")
   })
+  
+  
+  observeEvent(input$box_coeficienti_portofoliu, {req(any(input$box_coeficienti_portofoliu$collapsed==FALSE,
+                                                     input$box_coeficienti_portofoliu$maximized==TRUE))
+    
+    vals$box_selected <- c(vals$box_selected,"box_coeficienti_portofoliu")
+  })
+  
+  
   
   # Observer for change view button state
   
@@ -107,8 +111,10 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
       vals_portofoliu$round_cols <- c(3:7)
       vals_portofoliu$perc_cols <- NULL  }
   })
+  
   # Key observer. Everytime it updates I update actions and render the main table.
   # Note I do not save it, as it will be saved from the beginning. I only save it inside vals_cip$baza_date_cip observer
+  
   observeEvent(vals_portofoliu$view_portofoliu,{
     vals_portofoliu$unique_dates <-  vals_portofoliu$view_portofoliu$anul_de_raportare
     

@@ -5,10 +5,6 @@ function portofoliu_module_js(ns_prefix) {
     $(this).tooltip('hide');
   }); 
   
-  $("#" + ns_prefix + "sinteza_portofoliu").on("click", ".download_btn", function() {
-    Shiny.setInputValue(ns_prefix + "data_raport_to_download", this.id, { priority: "event"});
-    $(this).tooltip('hide');
-  });
 }
 
 

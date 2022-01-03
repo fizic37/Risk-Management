@@ -16,13 +16,18 @@ app_ui <- function(request) {
                               footer = bs4Dash::bs4DashFooter(left = "Developed by Tita Marius for FNGCIMM"),
                               
                               body = bs4Dash::bs4DashBody( bs4Dash::tabItems(
+                                
+                                bs4Dash::tabItem(tabName = "home",mod_home_ui("home_ui_1") ),
+                                
                                 bs4Dash::tabItem(tabName = "plati", mod_provizioane_plati_ui("provizioane_plati_ui_1") ),
                                 
                                 bs4Dash::tabItem(tabName = "solduri", mod_database_portofoliu_ui("database_portofoliu_ui_1") ),
                                 
                                 bs4Dash::tabItem(tabName = "crc", mod_crc_ui("crc_ui_1") ),
                                 
-                                bs4Dash::tabItem(tabName = "ifrs", mod_ifrs_portofoliu_ui("ifrs_portofoliu_ui_1") )
+                                bs4Dash::tabItem(tabName = "ifrs", mod_ifrs_portofoliu_ui("ifrs_portofoliu_ui_1") ),
+                                
+                                bs4Dash::tabItem(tabName = "calibrare", mod_calibrare_ui("calibrare_ui_1") )
                               ) )
     )
   )

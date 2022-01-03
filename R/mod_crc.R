@@ -89,7 +89,7 @@ mod_crc_server <- function(input, output, session, vals){
                           h3(paste0("Esti sigur ca vrei sa stergi inregistrarile CRC din data de ",
                                     input$data_raport_to_delete," ?"), style = "color: #c92052"),  footer = 
                             tagList(shinyWidgets::actionBttn(inputId = ns("confirm_delete"),label = "Confirm",
-                                                             icon = icon("check"),color = "success",size = "md"),
+                                        style = "stretch",icon = icon("check"),color = "success",size = "md"),
                                     shinyWidgets::actionBttn(inputId = ns("cancel_delete"),label = "Cancel",
                                           style="stretch",icon = icon("window-close"),color = "danger",size = "md")
                             )))

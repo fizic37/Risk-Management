@@ -235,16 +235,17 @@ mod_ifrs_portofoliu_server <- function(input, output, session, vals_portofoliu, 
                         dplyr::arrange(desc(categorie_contaminata), stage) %>% 
                         dplyr::mutate(stage = as.character(stage)) %>%
                         janitor::adorn_totals(where = "row",fill = "-",name = "Total"),
-                      caption = "Sinteza IFRS", show_buttons=TRUE,round_col = 3 )  } )
+                      caption = paste0("Sinteza IFRS9 la data de ",input$data_raport),
+                      show_buttons=TRUE,round_col = 3 )  } )
       
       
       output$show_button <- renderUI(  shinyWidgets::actionBttn(inputId = ns("save_ifrs"),
-                  label = "Salveaza IFRS9",icon = icon("save"),style = "stretch",color = "success",size = "sm"))
+                  label = "Salveaza IFRS9 calculat mai jos",icon = icon("save"),style = "stretch",color = "success",size = "md"))
     }
     
   } )
   
-  observeEvent(input$save_ifrs,{ req(input$save_ifrs==1)
+  observeEvent( input$save_ifrs,{ req(input$save_ifrs==1)
     ifrs_database <- readRDS("R/reactivedata/ifrs/portofoliu_ifrs.rds")
     
     ifrs_reactive <- reactiveValues( df_old = ifrs_database,

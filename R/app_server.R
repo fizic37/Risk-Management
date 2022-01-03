@@ -23,6 +23,12 @@ app_server <- function( input, output, session ) {
   
   observeEvent(vals$sidebar_selected,{
     
+    if (sum("home" == vals$sidebar_selected)==1) {
+      
+      mod_home_server("home_ui_1", parrent=session)
+     
+      vals$sidebar_selected <- c(vals$sidebar_selected,"home")   }
+    
     if (sum("plati" == vals$sidebar_selected)==1) {
       callModule(mod_provizioane_plati_server, "provizioane_plati_ui_1", vals, plati_reactive)
       vals$sidebar_selected <- c(vals$sidebar_selected,"plati")   }
@@ -36,13 +42,18 @@ app_server <- function( input, output, session ) {
       vals$sidebar_selected <- c(vals$sidebar_selected,"crc")   }
     
     if (sum("ifrs" == vals$sidebar_selected)==1) {
-      callModule(mod_ifrs_portofoliu_server, "ifrs_portofoliu_ui_1", vals_portofoliu, parrent_session)
+      callModule(mod_ifrs_portofoliu_server, "ifrs_portofoliu_ui_1", vals_portofoliu, parrent_session=session)
       mod_ifrs_database_server("ifrs_database_ui_1")
       vals$sidebar_selected <- c(vals$sidebar_selected,"ifrs")   }
+    
+    if (sum("calibrare" == vals$sidebar_selected)==1) {
+      mod_calibrare_server("calibrare_ui_1")
+      vals$sidebar_selected <- c(vals$sidebar_selected,"calibrare")   }
     
   })
   
   observeEvent(vals$box_selected,{
+    
     if ( sum("box_upload_plati" == vals$box_selected)==1 ) { 
       callModule(mod_database_upload_plati_server, "database_upload_plati_ui_1", plati_reactive)
       vals$box_selected <- c(vals$box_selected, "box_upload_plati") }
@@ -65,11 +76,21 @@ app_server <- function( input, output, session ) {
       
       vals$box_selected <- c(vals$box_selected, "box_upload_portofoliu") }
     
+    if ( sum("box_coeficienti_portofoliu" == vals$box_selected)==1 ) { 
+      
+      mod_coeficienti_portofoliu_server("coeficienti_portofoliu_ui_1", vals_portofoliu)
+      
+      #vals$box_selected <- c(vals$box_selected, "box_coeficienti_portofoliu")
+      }
+    
     if ( sum("box_cip" == vals$box_selected)==1 ) { 
       
       callModule(mod_cip_server, "cip_ui_1")
       
       vals$box_selected <- c(vals$box_selected, "box_cip") }
+    
+    
+    
     
     
     
