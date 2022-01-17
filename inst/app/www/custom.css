@@ -10,6 +10,24 @@
     background-color: #20a7c9;
 }
 
+/* CSS styling for downloadlink button - used inside mod_database_portofoliu - migration */
+
+.glyphicon-download-alt {
+  color: #20c997;
+}
+
+.glyphicon-download-alt:before {
+  margin-right: 5px;
+  }
+
+
+
+
+
+
+
+
+
 
       
       
