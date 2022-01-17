@@ -66,6 +66,8 @@ mod_database_portofoliu_ui <- function(id){
 mod_database_portofoliu_server <- function(input, output, session,vals,vals_portofoliu){
   ns <- session$ns
   
+  portofoliu_database <- readRDS("R/reactivedata/portofoliu/portof_database.rds")
+  
   observeEvent(input$box_utility, {req(any(input$box_utility$collapsed==FALSE,
                                                 input$box_utility$maximized==TRUE))
     
@@ -211,7 +213,7 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
     output$confirm_download <- downloadHandler(filename = function() {
           paste0("portof_database_",  input$data_raport_to_download, ".csv")   },
         content = function(file) {
-            readr::write_csv(x = readRDS("R/reactivedata/portofoliu/portof_database.rds") %>%
+            readr::write_csv(x = portofoliu_database %>%
                           dplyr::filter(anul_de_raportare ==  as.Date.character(input$data_raport_to_download)),
                       path = file)
           removeModal(session = session)  }   )
@@ -242,7 +244,7 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
   
   observeEvent(input$confirm_delete,{
     
-    vals_portofoliu$portof_database <- readRDS("R/reactivedata/portofoliu/portof_database.rds") %>% 
+    vals_portofoliu$portof_database <- portofoliu_database %>% 
       dplyr::filter(anul_de_raportare != as.Date.character(input$data_raport_to_delete))
     removeModal(session = session)
     })
@@ -253,7 +255,7 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
   
      
   observeEvent(input$start_migration,{
-    vals_portofoliu$lista_provizion_non_ifrs <- readRDS("R/reactivedata/portofoliu/portof_database.rds") %>% 
+    vals_portofoliu$lista_provizion_non_ifrs <- portofoliu_database %>% 
       dplyr::group_by(`Cod Partener`,anul_de_raportare,categorie_contaminata) %>% 
       dplyr::summarise(expunere = sum(expunere),provizion_contabil=sum(provizion_contabil)) %>% dplyr::ungroup() %>%
       dplyr::group_split(anul_de_raportare,.keep=TRUE) %>% purrr::map(~rename_col_nonifrs(.x))
@@ -262,7 +264,6 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
       purrr::keep(.p = ~unique(.x$anul_de_raportare) == input$migration_to_nonifrs) %>% purrr::flatten_df()
       
       
-    
     vals_portofoliu$portofoliu_perioada_anterioara <- vals_portofoliu$lista_provizion_non_ifrs %>% 
         purrr::keep(.p = ~unique(.x$anul_de_raportare) == input$migration_from_nonifrs) %>% purrr::flatten_df() %>% 
             dplyr::left_join(y= dplyr::select(vals_portofoliu$portofoliu_perioada_curenta,
@@ -339,8 +340,7 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
     
     
      ### Provisions Migration - not finished
-    
-    # This table produces provision migration for all CUI that are in perioada curenta (it does not matter if they are in perioada anterioara or not)
+       # This table produces provision migration for all CUI that are in perioada curenta (it does not matter if they are in perioada anterioara or not)
     vals_portofoliu$tabel_variatie_provizioane <- dplyr::left_join(x = dplyr::select(vals_portofoliu$portofoliu_perioada_curenta,
             `Cod Partener`,   !!rlang::sym(vals_portofoliu$categorie_curenta), !!rlang::sym(vals_portofoliu$provizion_curent)), 
         y = dplyr::select(vals_portofoliu$portofoliu_perioada_anterioara,`Cod Partener`,!!rlang::sym(vals_portofoliu$categorie_anterioara),
@@ -358,14 +358,53 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
     
     # I produce my final regularisation provisions
     vals_portofoliu$regularizare_provizioane_non_ifrs <- dplyr::bind_rows(vals_portofoliu$tabel_beneficiari_iesiti,
-                                                                vals_portofoliu$tabel_variatie_provizioane)
+                                              vals_portofoliu$tabel_variatie_provizioane)
+    
     
     output$show_down_button <- renderUI({req(vals_portofoliu$regularizare_provizioane_non_ifrs)
-      downloadLink(outputId = session$ns("down_regularizare_portof"),label = 
-                     "Click aici pentru a downloada regularizarea provizioanelor depreciate")  })
+      fluidRow( column(width = 6,
+        downloadLink(outputId = ns("down_regularizare_portof"),label = 
+                     "Download regularizarea provizioanelor depreciate", class = "glyphicon glyphicon-download-alt"
+                    )),
+        
+        column(width = 3, downloadLink(outputId =ns("down_intrari_deprec"),label = 
+                  "Download intrari depreciate", class = "glyphicon glyphicon-download-alt") ),
+        
+        column(width = 3, downloadLink(outputId =ns("down_iesiri_deprec"),label = 
+                "Download iesiri depreciate", class = "glyphicon glyphicon-download-alt") )
+      )
+        
+        })
     
     output$down_regularizare_portof <- downloadHandler(filename = function() {"regularizare_proviz_deprec.csv"},
                 content = function(file) {readr::write_csv(x =  vals_portofoliu$regularizare_provizioane_non_ifrs, file = file)})
+    
+    # Produce intrari/iesiri depreciate - la nivel de contract
+    
+    vals_portofoliu$depreciate_curenta <- portofoliu_database %>% 
+      dplyr::filter(anul_de_raportare == input$migration_to_nonifrs, categorie_contaminata != "standard")
+    
+    vals_portofoliu$depreciate_anterioara <- portofoliu_database %>% 
+      dplyr::filter(anul_de_raportare == input$migration_from_nonifrs, categorie_contaminata != "standard")
+    
+    bi_cui_existent <- readRDS("R/reactivedata/bi_cui.rds")
+    
+  
+    output$down_intrari_deprec <- downloadHandler(filename = function() {"intrari_deprec.csv"},
+        content = function(file) {readr::write_csv( file = file,
+          x =  vals_portofoliu$depreciate_curenta %>% 
+            dplyr::filter(!DocumentId %in% vals_portofoliu$depreciate_anterioara$DocumentId) %>%
+            dplyr::select(Banca, Beneficiar,DocumentId, DocumentNumber = `Nr contract`, `Cod Partener`) %>%
+            dplyr::left_join(bi_cui_existent, by = c("Cod Partener" = "Code")) %>%
+            dplyr::select(Banca, Beneficiar,DocumentId,DocumentNumber,CUI = `Unique ID`) ) })
+    
+    output$down_iesiri_deprec <- downloadHandler(filename = function() {"iesiri_deprec.csv"},
+              content = function(file) {readr::write_csv( file = file,
+              x =  vals_portofoliu$depreciate_anterioara %>% 
+                dplyr::filter(!DocumentId %in% vals_portofoliu$depreciate_curenta$DocumentId) %>% 
+                     dplyr::select(Banca, Beneficiar,DocumentId, DocumentNumber = `Nr contract`,`Cod Partener`) %>%
+                     dplyr::left_join(bi_cui_existent, by = c("Cod Partener" = "Code")) %>%
+                     dplyr::select(Banca, Beneficiar,DocumentId,DocumentNumber,CUI = `Unique ID`) ) })
     
   })
   
