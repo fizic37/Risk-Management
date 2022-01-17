@@ -35,10 +35,9 @@ mod_sidebar_server <- function(id, vals){
       
       bs4Dash::menuItem(tabName = "crc",text = "CRC si CIP", icon = icon("copyright"), selected = F),
       
-      bs4Dash::menuItem(tabName = "ifrs",text = "IFRS9", icon = icon("italic"), selected = F),
+      bs4Dash::menuItem(tabName = "ifrs",text = "IFRS9", icon = icon("italic"), selected = F)
       
-      hr(),
-      bs4Dash::menuItem(tabName = "calibrare",text = "Calibrare scoring", icon = icon("stream"), selected = FALSE)
+      #bs4Dash::menuItem(tabName = "calibrare",text = "Calibrare scoring", icon = icon("stream"), selected = FALSE)
       
     )
     
