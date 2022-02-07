@@ -13,7 +13,8 @@ mod_ifrs_database_ui <- function(id){
   fluidRow( column(width = 6,
     selectInput(ns("baza_ifrs_date"),label = "Selecteaza data bazei de date", choices = c())),
     
-    column(width = 6) ),
+    column(width = 6, downloadLink(ns("down_ifrs_database"),"Click to download selected IFRS database",
+                                   class = "glyphicon glyphicon-download")) ),
   
   DT::dataTableOutput(ns("baza_ifrs")), br(), br(), 
   
@@ -69,6 +70,10 @@ mod_ifrs_database_server <- function(id){
       output$baza_ifrs <- DT::renderDataTable( { req( vals_ifrs$view_table,vals_ifrs$caption )
         dt_generate_function( df = vals_ifrs$view_table,show_buttons=TRUE, caption = vals_ifrs$caption,
                               round_col = 3, perc_col = vals_ifrs$perc_col)  } )
+      
+      output$down_ifrs_database <- downloadHandler(filename = function(){paste0("IFRS_database_",input$baza_ifrs_date,".csv")},
+                      content = function(file) {readr::write_csv(x =  vals_ifrs$portofoliu_ifrs %>% 
+                                    dplyr::filter(data_raport == input$baza_ifrs_date),file = file) })
       
      })
     

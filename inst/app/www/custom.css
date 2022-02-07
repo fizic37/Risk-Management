@@ -20,7 +20,14 @@
   margin-right: 5px;
   }
 
+.glyphicon-download {
+  color: #20c997;
+  margin-top: 23px;
+}
 
+.glyphicon-download:hover {
+  color: #20a7c9;
+}
 
 
 
