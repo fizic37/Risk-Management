@@ -45,9 +45,11 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
   
  threshold_date_input <- as.Date("2019-12-31")
   
-  vals_portof_upload <- reactiveValues(nume_obligatorii= c("ID Document",'Beneficiar','Cod Partener','Banca','Nr contract','Valuta','Soldul garantiei [in LEI]',"Data contract",
+  vals_portof_upload <- reactiveValues(nume_obligatorii= c("ID Document",'Beneficiar','Cod Partener','Banca',
+              'Nr contract','Valuta','Soldul garantiei [in LEI]',"Data contract",
               'Soldul creditului [in LEI]','Procentul de garantare','Tip Fond [centralizat]'),
-              optional_names = c("%contragarantare", "SoldGarantieContragarantata_LEI"))
+              optional_names = c("%contragarantare", "SoldGarantieContragarantata_LEI"),
+              column_type_character = "Cod Partener")
   
   observeEvent(input$sold,{
     
@@ -57,6 +59,7 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
     
     # observer for when excel file does not contains mandatory column names
     observe({req(vals_portof_upload$all_names == FALSE)
+      
       output$date_portof_output <- renderText({
         paste0("STOP, nu am gasit coloanele: ",paste(vals_portof_upload$missing_names,collapse = "; ") %>% stringr::str_c()) })
       })
@@ -69,7 +72,7 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
       
       portofoliu_second_read <- reactive({  vals_portof_upload$file_read_prel %>%  
           dplyr::mutate_at(.vars = c( 'Soldul garantiei [in LEI]', 'Procentul de garantare','ID Document' ),
-              .funs = as.numeric) %>% dplyr::mutate_at(.vars = 'Cod Partener', .funs = as.character)    })
+              .funs = as.numeric) %>% dplyr::mutate(dplyr::across(.cols = 'Cod Partener', .funs = ~as.character(.x)))    })
       
      
       # Check to see if I have the column SoldGarantieContragarantata_LEI or %contragarantare
@@ -83,6 +86,8 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
       
       nume_lipsa <- reactive ({ setdiff(vals_portof_upload$nume_obligatorii,names(portofoliu_second_read())) })
       
+      
+      
       date_upload_file <- reactive({shiny::validate(shiny::need(tools::file_ext(input$sold$datapath)=="xlsx",
                             message = paste0("XLSX only! You uploaded a ",tools::file_ext(input$sold$datapath)," file")))
         
@@ -93,19 +98,24 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
       
      
       # I process portfolio for contragarantii
-      portofoliu_contragarantii <- reactive ({ shiny::validate(shiny::need(!nu_exista_ctg(),message = FALSE))
+      portofoliu_contragarantii <- reactive ({ #shiny::validate(shiny::need(!nu_exista_ctg(),message = FALSE))
         if (exista_sold_ctg()) {portofoliu_second_read() %>% 
             dplyr::mutate(contragarantii = SoldGarantieContragarantata_LEI) %>% tidyr::replace_na(list(contragarantii=0)) }
+        
         else if (exista_proc_ctg()) {portofoliu_second_read() %>% 
             dplyr::mutate(contragarantii=`%contragarantare` * `Soldul garantiei [in LEI]`/100) %>% tidyr::replace_na(list(contragarantii=0)) }
-        else {portofoliu_second_read()}
-      })
+        
+        else { portofoliu_second_read() %>% dplyr::mutate(contragarantii=0) }
+        
+       })
       
       output$date_portof_output <- renderUI({req(date_upload_file())
         
-        dateInput(inputId = session$ns('date_portof_input'),label = "Selecteaza data portofoliului uploadat",
-                  value = date_upload_file(),min = as.Date("2001-12-31"),max = as.Date("2030-12-31"),width = "300px")  })
+        shinyWidgets::airDatepickerInput(ns('date_portof_input'),label = "Selecteaza data portofoliului uploadat",
+                  value = date_upload_file(),minDate = as.Date("2001-12-31"),maxDate = as.Date("2030-12-31"),
+                  autoClose = TRUE,language = "ro", width = "320px")  })
       
+     
       portofoliu_surse_proprii <- reactive({portofoliu_contragarantii() %>% 
           dplyr::filter(`Tip Fond [centralizat]` == sort(unique(portofoliu_contragarantii()$`Tip Fond [centralizat]`))[1]) })
       
@@ -117,8 +127,8 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
                                dplyr::select(4,1,2,3))   })
       
       output$calculate_depreciate_output <- renderUI({req(portofoliu_surse_proprii())
-        actionButton(inputId = session$ns("calculate_depreciate"),label = "Calculeaza garantiile depreciate",icon = icon("chart-area"),
-                     width = "300px")   })
+        shinyWidgets::actionBttn(ns("calculate_depreciate"),label = "Calculeaza garantiile depreciate",icon = icon("chart-area"),
+                  style = "stretch",color = "success",size = "md")   })
    
       observeEvent(input$calculate_depreciate,{
         
@@ -156,7 +166,7 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
                     cu prelucrarea portofoliului. Poti updatat fisierul de insolvente in ferereastra de mai jos.")) } 
           
           
-          portofoliu_categorie <- eventReactive(input$date_portof_input,{
+          portofoliu_categorie <- eventReactive( input$date_portof_input,{
             portofoliu_prelucrat() %>% dplyr::mutate(anul_de_raportare = input$date_portof_input) %>% 
               dplyr::group_by(`Cod Partener`, Beneficiar,anul_de_raportare) %>% 
               dplyr::summarise(expunere = sum(`Soldul garantiei [in LEI]`), contragarantii = sum(contragarantii),
@@ -179,15 +189,16 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
           
       output$calculate_provizioane_depreciate_output <- renderUI({
             fluidRow(column(width = 6,
-            actionButton(inputId = session$ns("calculate_provizioane_depreciate"), icon = icon("calculator"),
-                         label = "Calculeaza provizioanele depreciate",width = "300px")),
-            column(width = 6, downloadButton(outputId = session$ns("down_portof_depreciat"),
-                                             label = "Download portofoliul depreciat",class = "pull-right"))  )
+            shinyWidgets::actionBttn(ns("calculate_provizioane_depreciate"), icon = icon("calculator"),
+                         label = "Calculeaza provizioanele depreciate",style = "stretch",color = "success",size = "md")),
+            
+            column(width = 6, shinyWidgets::downloadBttn(ns("down_portof_depreciat"),style = "stretch",
+                    color = "success",size = "md", label = "Download portofoliul depreciat"))  )
           })
         
       output$down_portof_depreciat <- downloadHandler(filename = function()  {paste0("portof_depreciat_",
                     input$date_portof_input,".csv")},content = function(file) {
-                      readr::write_csv(x = portofoliu_categorie(),path = file)   })
+                      readr::write_csv(x = portofoliu_categorie(), file = file)   })
       updateActionButton(session = session, inputId = "calculate_depreciate")
       
         }
@@ -195,9 +206,11 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
       observeEvent(input$calculate_provizioane_depreciate,{
           
           removeUI("#database_portofoliu_upload_ui_1-calculate_provizioane_depreciate")
-          removeUI("#database_portofoliu_upload_ui_1-down_portof_depreciat")
+          removeUI("#database_portofoliu_upload_ui_1-down_portof_depreciat_bttn")
         
-        vals_portof_upload$coef_non_ifrs <- readRDS(file = "R/reactivedata/portofoliu/coef_non_ifrs.rds")
+        vals_portof_upload$coef_non_ifrs <- readRDS(file = "R/reactivedata/portofoliu/coef_non_ifrs.rds") %>%
+          dplyr::filter(FromDate <= input$date_portof_input, ToDate >= input$date_portof_input) %>%
+          dplyr::select(-FromDate, -ToDate) %>% dplyr::slice(1)
         
         output$coeficienti_provizioane_nonifrs <- DT::renderDataTable({
           dt_generate_function(df = vals_portof_upload$coef_non_ifrs,editable="cell",round_col = 1:5,digits = 2,
@@ -206,35 +219,46 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
         
         output$save_portofoliu_output <- renderUI({
             fluidRow(
-              column(width = 4,
+              column(width = 5, shinyWidgets::downloadBttn( ns("down_portof_proviz"),style = "stretch",color = "success",
+                                                            label = "Download portofoliul provizionat",size = "md")),
+              column(width = 3,
                   shinyWidgets::prettyToggle(inputId = ns("link_portofoliu"),value = FALSE,icon_off = icon("plus"),
                       icon_on = icon("redo-alt"),
                       label_off = "Click to show portofoliul detaliat", label_on = "Click to hide portofoliul detaliat")),
               column(width = 4,
-                         actionButton(inputId = session$ns("save_portofoliu"),label = "Salveaza portofoliul prelucrat",width = "300px",
-                                      icon = icon("save"))),    
-            column(width = 4, downloadButton(outputId = session$ns("down_portof_proviz"),
-                        label = "Download portofoliul provizionat", class = "pull-right"))   )
+                         shinyWidgets::actionBttn(inputId = session$ns("save_portofoliu"),label = "Salveaza portofoliul prelucrat",
+                              icon = icon("save"),style = "stretch",color = "success", size = "md"))    
+               )
               })
           
           
-          portofoliu_provizion <- reactive({ dplyr::left_join(x = portofoliu_prelucrat(),    y = dplyr::select(portofoliu_categorie(),
-                                                                                                               'Cod Partener', categorie_contaminata,   anul_de_raportare),by = "Cod Partener") %>%
-              dplyr::select(DocumentId = 'ID Document', anul_de_raportare, Banca,Beneficiar, 'Cod Partener',
-                            'Nr contract',expunere = 'Soldul garantiei [in LEI]',   contragarantii,
-                            categorie_contaminata) %>% 
+          
+          portofoliu_provizion <- reactive({ dplyr::left_join( x = portofoliu_prelucrat(),
+            y = dplyr::select( portofoliu_categorie(), 'Cod Partener', categorie_contaminata,
+              anul_de_raportare ),    by = "Cod Partener" ) %>%
+              dplyr::select(  DocumentId = 'ID Document',   anul_de_raportare,
+                Banca, Beneficiar, 'Cod Partener',  'Nr contract',
+                expunere = 'Soldul garantiei [in LEI]',   contragarantii,   categorie_contaminata ) %>% 
               dplyr::mutate(provizion_contabil = ifelse(
                 categorie_contaminata == "cerere_plata",
-                (expunere - contragarantii * vals_portof_upload$coef_non_ifrs[1,5]) * vals_portof_upload$coef_non_ifrs[1,3] * vals_portof_upload$coef_non_ifrs[1,4],
+                (expunere - contragarantii * vals_portof_upload$coef_non_ifrs$Ajustare_ctg) * 
+                  vals_portof_upload$coef_non_ifrs$Coef_trans_cereri_plata_plati * 
+                  vals_portof_upload$coef_non_ifrs$Coef_provizionare_plati,
                 ifelse(categorie_contaminata == "insolventa",
-                       (expunere - contragarantii * vals_portof_upload$coef_non_ifrs[1,5]) * vals_portof_upload$coef_non_ifrs[1,1] * vals_portof_upload$coef_non_ifrs[1,3] * vals_portof_upload$coef_non_ifrs[1,4],
+                       (expunere - contragarantii * vals_portof_upload$coef_non_ifrs$Ajustare_ctg) * 
+                         vals_portof_upload$coef_non_ifrs$Coef_trans_cereri_plata_insolvente * 
+                  vals_portof_upload$coef_non_ifrs$Coef_trans_cereri_plata_plati * 
+                    vals_portof_upload$coef_non_ifrs$Coef_provizionare_plati,
                        ifelse(categorie_contaminata == "instiintare_neplata",
-                              (expunere - contragarantii * vals_portof_upload$coef_non_ifrs[1,5]) * vals_portof_upload$coef_non_ifrs[1,2] * vals_portof_upload$coef_non_ifrs[1,3] * vals_portof_upload$coef_non_ifrs[1,4],
+                              (expunere - contragarantii * vals_portof_upload$coef_non_ifrs$Ajustare_ctg) * 
+                                vals_portof_upload$coef_non_ifrs$Coef_trans_cereri_plata_instiintari * 
+                  vals_portof_upload$coef_non_ifrs$Coef_trans_cereri_plata_plati * 
+                    vals_portof_upload$coef_non_ifrs$Coef_provizionare_plati,
                               0)))) })
           
           output$down_portof_proviz <- downloadHandler(filename = function() {paste0("portof_provizionat_",
             input$date_portof_input,".csv")},content = function(file) {
-              readr::write_csv(x = portofoliu_provizion(),path = file)      })
+              readr::write_csv(x = portofoliu_provizion(),file = file)      })
           
           output$provizion_detaliat <- DT::renderDataTable({req(input$link_portofoliu)
             DT::datatable(data = portofoliu_provizion(),rownames = FALSE,options = list(pageLength=5, dom = "ftp"),
