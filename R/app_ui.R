@@ -27,7 +27,8 @@ app_ui <- function(request) {
                                 
                                 bs4Dash::tabItem(tabName = "ifrs", mod_ifrs_portofoliu_ui("ifrs_portofoliu_ui_1") ),
                                 
-                                bs4Dash::tabItem(tabName = "calibrare", mod_calibrare_ui("calibrare_ui_1") )
+                                bs4Dash::tabItem(tabName = "admin", mod_admin_ui("admin_ui_1") )
+                                
                               ) )
     )
   )
