@@ -12,34 +12,41 @@ mod_ifrs_portofoliu_ui <- function(id){
   bs4Dash::tabsetPanel(id = ns("ifrs_panel"),  selected = T,type = "pills",
   
            
-  
-        tabPanel(title = "Database IFRS9", icon = icon("database"),value = "database_ifrs",
-                 
-                 mod_ifrs_database_ui("ifrs_database_ui_1")),
+        tabPanel(title = "New database IFRS9", icon = icon("database"),value = "new_database_ifrs",
+                 mod_new_ifrs_database_ui("new_ifrs_database_ui_1")),
+        
+        
+        tabPanel(title = "New calcul provizioane IFRS9",icon = icon("calculator"),
+                 mod_new_ifrs_ui("new_ifrs_ui_1")),
       
-         tabPanel(title = "Calcul Provizioane IFRS9", icon = icon("square-root-alt"),
-                  
-                  tagList( br(),
+         #tabPanel(title = "Calcul Provizioane IFRS9", icon = icon("square-root-alt"),
+             #     tagList( br(),
+             #     shinybusy::add_busy_spinner(color = "#c92052", position = "bottom-right", timeout = 200),
+              #      shinyFeedback::useShinyFeedback(feedback = TRUE,toastr = TRUE),  
                     
-                           shinybusy::add_busy_spinner(color = "#c92052", position = "bottom-right", timeout = 200),
-                    shinyFeedback::useShinyFeedback(feedback = TRUE,toastr = TRUE),  
-                    
-                  fluidRow(column(width = 4,
-         selectInput(inputId = ns("data_raport"),label = "Selecteaza data raportului IFRS9",choices = c())),
+                 # fluidRow(column(width = 4,
+         #selectInput(inputId = ns("data_raport"),label = "Selecteaza data raportului IFRS9",choices = c())),
          
-         column(width = 4, br(),  uiOutput(ns("show_button"))),
+         #column(width = 4, br(),  uiOutput(ns("show_button"))),
          
-         column(width = 4, br(),shinyWidgets::prettyToggle(inputId = ns("show_info"),label_on = "Hide info below",
-                label_off = "Click to show more info",icon_on = icon("eye-slash"),icon_off = icon("info"),
-                value = FALSE,status_off = "success",status_on = "info" ) )
-         ) ),
+         #column(width = 4, br(),shinyWidgets::prettyToggle(inputId = ns("show_info"),label_on = "Hide info below",
+           #     label_off = "Click to show more info",icon_on = icon("eye-slash"),icon_off = icon("info"),
+            #    value = FALSE,status_off = "success",status_on = "info" ) )
+         #) ),
          
-         textOutput(outputId = ns("info")), br(),
+        # textOutput(outputId = ns("info")), br(),
          
-         DT::dataTableOutput(outputId = ns("sinteza_ifrs"))
-         ),
+         #DT::dataTableOutput(outputId = ns("sinteza_ifrs"))
+         #),
+        
+        #tabPanel(title = "Old database IFRS9", icon = icon("database"),value = "database_ifrs",
+                 
+          #       mod_ifrs_database_ui("ifrs_database_ui_1")),
+        
+        tabPanel(title = "Stage Migration",icon = icon("arrows-alt"),value = "migration_ifrs",
+                 mod_ifrs_migration_ui("ifrs_migration_ui_1")),
          
-        tabPanel(title = "Dezvoltare Modele IFRS9", icon = icon("layer-group"),
+        tabPanel(title = "Dezvoltare Modele IFRS9 - OLD", icon = icon("layer-group"),
                   tagList( br(),
                   fluidRow( bs4Dash::box(title = "Model 1Y",status = "info",width = 6,
                   footer = "Model 1Y genereaza probabilitatile de default la un an. 
@@ -111,7 +118,7 @@ mod_ifrs_portofoliu_server <- function(input, output, session, vals_portofoliu, 
   
   ns <- session$ns
   
-  updateTabsetPanel(session = session, inputId = 'ifrs_panel',selected = "database_ifrs")
+  updateTabsetPanel(session = session, inputId = 'ifrs_panel',selected = "new_database_ifrs")
   
   output$info <- renderText({ req(input$show_info == TRUE) 
     "Apasand butonul calculeaza de mai sus se vor genera provizioanele IFRS9 pentru portofoliul de garantii la data selectata.
@@ -186,6 +193,7 @@ mod_ifrs_portofoliu_server <- function(input, output, session, vals_portofoliu, 
           categorie_contaminata == "standard",  0.923187279574391,
           ifelse(   categorie_contaminata == "insolventa",  0.0289517205650865,
                     ifelse(   categorie_contaminata == "instiintare_neplata", 0.0478609998605216,0  )  ) ))
+        
         
         model_1Y_with_CRC <- readRDS("R/reactivedata/ifrs/model_1Y_with_CRC")
         coefficients_1Y_CRC <- predict(object = model_1Y_with_CRC, type = "coefficients",s = model_1Y_with_CRC$lambda[28])
