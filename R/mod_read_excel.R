@@ -61,7 +61,7 @@ mod_read_excel_server <- function(input, output, session,excel_reactive, green="
       excel_reactive$all_names <- excel_reactive$nume_obligatorii %in% names(file_read()) %>% all() 
       
       excel_reactive$missing_names <- setdiff(excel_reactive$nume_obligatorii,names(file_read()))
-      
+     
       if (!is.null(excel_reactive$optional_names) && excel_reactive$optional_names %in% names(file_read()) %>% any()) {
         excel_reactive$coloane_selectate <- c(excel_reactive$nume_obligatorii, 
                   excel_reactive$optional_names[which(excel_reactive$optional_names %in% names(file_read()))]) }
@@ -69,12 +69,14 @@ mod_read_excel_server <- function(input, output, session,excel_reactive, green="
       else {excel_reactive$coloane_selectate <- excel_reactive$nume_obligatorii }
       
       if (excel_reactive$all_names) {
+       
+        #if (is.null(excel_reactive$column_names_date)) {
+        #  excel_reactive$column_types_date <- NULL }
         
-        if (is.null(excel_reactive$column_names_date)) {
-          excel_reactive$column_types_date <- NULL }
-        
-        else { excel_reactive$column_types_date <- purrr::map_chr(names(file_read()),
-                                ~ifelse(.x %in% excel_reactive$column_names_date,"date","guess")) }
+        #else { 
+          excel_reactive$column_types_date <- purrr::map_chr(names(file_read()),
+                        ~ifelse(.x %in% excel_reactive$column_names_date,"date",
+                          ifelse(.x %in% excel_reactive$column_type_character,"text","guess")))
         
         
         excel_reactive$file_read_prel <- readxl::read_excel(excel_reactive$file_input,sheet = selected_sheet(), 
