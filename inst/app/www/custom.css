@@ -30,7 +30,7 @@
 }
 
 
-
+body > div.wrapper > nav > ul:nth-child(1) > li > a > i { color: #c92052;}
 
 
 
