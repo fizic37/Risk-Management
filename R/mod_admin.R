@@ -14,7 +14,7 @@ mod_admin_ui <- function(id){
     shinyFeedback::useShinyFeedback(),
     
     bs4Dash::box( title="Coeficienti de provizionare garantii depreciate",
-                 status = "info",width = 12, collapsible = T, collapsed = F,
+                 status = "info",width = 12, collapsible = T, collapsed = T,
                  maximizable = TRUE, icon = icon("square-root-alt"),
                  fluidRow( column( width =4,
                  
@@ -30,7 +30,7 @@ mod_admin_ui <- function(id){
                   column(width = 12, DT::dataTableOutput(ns("coeficienti_depreciate")))
                  )  ),
     
-    bs4Dash::box(title = "Scenarii de evolutie macroeconomica", status = "info",width = 12, collapsible = T, collapsed = F,
+    bs4Dash::box(title = "Scenarii de evolutie macroeconomica", status = "info",width = 12, collapsible = T, collapsed = T,
                  maximizable = TRUE, icon = icon("chart-area"),
                  fluidRow( column( width = 4,
                  tagList(shinyWidgets::airDatepickerInput(ns("data_scenarii"),label = "Selecteaza data scenariilor",
@@ -50,7 +50,7 @@ mod_admin_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    baza_coeficienti <- readRDS( 'R/reactivedata/portofoliu/coef_non_ifrs.rds' )
+    baza_coeficienti <- readRDS( 'R/reactivedata/ifrs/coef_non_ifrs.rds' )
     
     baza_scenarii <- readRDS("R/reactivedata/ifrs/scenarios.rds")
     
@@ -169,7 +169,7 @@ mod_admin_server <- function(id){
               lubridate::`%m+%`(coeficienti_actuali$FromDate,lubridate::years(1))-1,.x) %>% as.Date(origin="1970-01-01"))) %>%
         dplyr::bind_rows(coeficienti_modificati()) %>% dplyr::arrange(desc(FromDate))
       
-     saveRDS(object = baza_coeficienti,file = 'R/reactivedata/portofoliu/coef_non_ifrs.rds')
+     saveRDS(object = baza_coeficienti,file = 'R/reactivedata/ifrs/coef_non_ifrs.rds')
      
      shinyFeedback::showToast(type = "success",title = "SUCCES",message = "Saved to database. Click refresh to see it",
                       .options = list("timeOut"=1500, 'positionClass'="toast-bottom-right", "progressBar" = TRUE))
