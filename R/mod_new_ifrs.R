@@ -55,7 +55,7 @@ mod_new_ifrs_server <- function(id, vals_portofoliu, parrent_session){
     vals_ifrs <- reactiveValues()
     
    coeficienti_depreciate <- reactive({ req(vals_ifrs$data_raport)
-     readRDS( 'R/reactivedata/portofoliu/coef_non_ifrs.rds' ) %>% 
+     readRDS( 'R/reactivedata/ifrs/coef_non_ifrs.rds' ) %>% 
        dplyr::filter( FromDate <= vals_ifrs$data_raport, ToDate>= vals_ifrs$data_raport)
     })
     
