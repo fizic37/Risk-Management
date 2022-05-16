@@ -19,10 +19,11 @@ devtools::install_github("fizic37/Risk-Management")
 Installing the app will not work since the data used is private (stored within R/reactivedata folder) and not available on github. 
 
 ## Deplyment to production
-Deployment to production is handled with docker image (built with Dockerfile inside the repository) and docker volumes. The docker is ran with the following command: docker run \-d \-it \-p 0.0.0.0:9000:80 \--name RiskReport -v risk_report:/build_zone/R/reactivedata/ -v baza_provizioane_plati:/build_zone/R/reactivedata/plati/external_volume/ -v portof_database:/build_zone/R/reactivedata/solduri/external_volume/ -v portofoliu_ifrs:/build_zone/R/reactivedata/solduri/external_volume_ifrs/ -v cereri_plata:/build_zone/R/reactivedata/plati/external_volume_cereri_plata/  \risk_report:latest
+Deployment to production is handled with docker image (built with Dockerfile inside the repository) and docker volumes. The docker is ran with the following command: docker run \-d \-it \-p 0.0.0.0:9001:80 \--name RiskManagement -v RiskManagement:/build_zone/R/reactivedata -v baza_provizioane_plati:/build_zone/R/reactivedata/plati/ -v portof_database:/build_zone/R/reactivedata/portofoliu/ -v portofoliu_ifrs:/build_zone/R/reactivedata/ifrs/ -v cereri_plata:/build_zone/R/plati/external_volume/ risk_management:latest
+where risk_management is the docker image built with docker build -t risk_management -f Dockerfile Risk-Management/Dockerfile
 
-The docker volumes created and used by the app are: risk_report, baza_provizioane_plati,portof_database,
-portofoliu_ifrs (last 3 volumes are also consumed by another app - RiskReport), cereri_plata (this volume is created for another app and consumed by current app).
+The docker volumes created and used by the app are: RiskManagement, baza_provizioane_plati,portof_database,portofoliu_ifrs. These volumes are fed with data by the app and the last 3 volumes are also used by RiskReport app ( also available within my repository).
+Docker volume cereri_plata is used by the app but is fed with new data by the RiskReport app.
 
 
 
