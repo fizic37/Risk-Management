@@ -167,6 +167,14 @@ mod_crc_server <- function(input, output, session, vals){
   observeEvent(input$crc_input,{
     
     rata_dobanzii <- readRDS("R/reactivedata/crc/rata_dobanzii.rds")
+    
+    
+    rata_dobanzii <- rata_dobanzii %>% dplyr::bind_rows(
+      rata_dobanzii %>% dplyr::filter(MONEDA == "EUR") %>% dplyr::mutate(dplyr::across(
+        .cols = c(MONEDA, valuta_termen, valuta_termen_data),
+        .fns = ~ stringr::str_replace_all(string = .x, pattern = "EUR", "NOK")
+      )) )
+    
     baza_date_crc_sliced <- readRDS("R/reactivedata/crc/baza_date_crc_sliced.rds")
     
     ratele_dobanzii_valabile <-  rata_dobanzii %>% dplyr::select(2:4) %>% 
@@ -180,6 +188,7 @@ mod_crc_server <- function(input, output, session, vals){
                           'Cod CRC', 'Comportament credit','Tip Credit', 'Termen acordare', 'Serviciul datoriei',
                           'Cod Valuta', 'Suma acordata', 'Suma datorata total','Suma datorata utilizata',
                           'Suma restanta', 'Data acordarii','Data scadentei')
+    
     
     crc_csv <- reactive ({ shiny::validate(shiny::need(expr = nume_obligatorii %in% names(crc_input_citit()) %>% all(),
                         message = paste0("Lipsesc coloanele: ",paste0(setdiff(nume_obligatorii, names(crc_input_citit())),
@@ -197,7 +206,9 @@ mod_crc_server <- function(input, output, session, vals){
             `Suma restanta`,  ifelse(`Data scadentei` <= lubridate::`%m+%`(`Data situatie risc global`, months(12)),
               `Suma datorata total`, pmax(`Suma restanta`,  (`Suma datorata total` * 365) / as.numeric(
                   difftime( time2 = `Data situatie risc global`,
-                    time1 = `Data scadentei`,  units = "days")  ) )  )  )   )    })
+                    time1 = `Data scadentei`,  units = "days")  ) )  )  )   ) %>%
+        dplyr::mutate(Principal_de_Rambursat = as.numeric(Principal_de_Rambursat)) })
+    
     
     crc_csv_rata_dobanzii <- reactive ({
         crc_csv() %>% dplyr::mutate(rata_dobanzii =
@@ -239,8 +250,10 @@ mod_crc_server <- function(input, output, session, vals){
     
     data_crc_upload <- reactive({ crc_final()$`Data situatie risc global`[1] })
     
+    
     vals_crc$check_type_crc <- janitor::compare_df_cols_same(baza_date_crc_sliced, crc_final() %>% 
-        dplyr::select(-`Cod CRC`, - `Acronim persoana declaranta`), bind_method = "rbind",verbose = FALSE)
+        dplyr::select(-`Cod CRC`, - `Acronim persoana declaranta`), bind_method = "rbind",verbose = TRUE)
+    
     
     observeEvent(vals_crc$check_type_crc,{
     
