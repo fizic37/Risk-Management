@@ -44,13 +44,22 @@ mod_database_upload_plati_server <- function(input, output, session, plati_react
   
   slice_provizioane_plati <- readRDS("R/reactivedata/plati/slice_provizioane_plati.rds")
   
-  output$diverse <- renderPrint(reactiveValuesToList(plati_reactive))
-  
+ 
   vals_upload_plati <- reactiveValues(
       nume_obligatorii = c( "CodBeneficar",
         slice_provizioane_plati %>% dplyr::select(-Plata_neta,-Expunere_CTG_plati,-data_raport) %>% names() ),
-      column_names_date = slice_provizioane_plati %>%
-        dplyr::select(dplyr::contains("data")) %>% dplyr::select(-data_raport) %>% names() )
+      colum_types = list("Banca"="text", "Beneficiar"="text","CUI"="numeric","NrCTR" = "text",
+                         "DataCTR"="date","ValutaCTR" = "text", "ProcGarantie" = "numeric","ProcCTG"="numeric",
+                         "DataSolCererePlata" = "date", "PlatiEfective"="numeric","TotalRecuperat"="numeric",
+                         "RecuperatFond" = "numeric", "RecuperatCTG" = "numeric", "Ipoteca" = "numeric",
+                         "EchipamenteUtilaje"="numeric","CreanteAlteImob" = "numeric","Stoc" = "numeric",
+                         "Depozit" = "numeric", "GarantieFinantatori" = "numeric", "ValoareAdmisaFNG" = "numeric",
+                         "ProvizionNou" = "numeric", "AplicarePariPassu" = "text", "DataPlata1" = "date",
+                         "PlataEfectiva1" = "numeric", "DataPlata2"="date", "PlataEfectiva2" = "numeric",
+                         "data_raport" = "date", "Plata_neta" = "numeric", "Expunere_CTG_plati" = "numeric",
+                         "DocumentId" = "numeric", "CodBeneficar" = "text") )
+       #column_names_date = slice_provizioane_plati %>%
+       # dplyr::select(dplyr::contains("data")) %>% dplyr::select(-data_raport) %>% names() )
   
  
    # Observer for plati file input
@@ -66,7 +75,8 @@ mod_database_upload_plati_server <- function(input, output, session, plati_react
     
     vals_upload_plati$file_input = input$plati_input$datapath
     
-    callModule(mod_read_excel_server, "read_excel_ui_1",excel_reactive = vals_upload_plati,)
+    mod_read_excel_server("read_excel_ui_1",excel_reactive = vals_upload_plati)
+    #callModule(mod_read_excel_server, "read_excel_ui_1",excel_reactive = vals_upload_plati,)
     
     
     # Below observer activates after excel module is called
@@ -167,7 +177,7 @@ mod_database_upload_plati_server <- function(input, output, session, plati_react
                element_id = input$data_plati_input, column_id = "data_raport", finalise_process_compare_df = FALSE)
     }
       
-      callModule(mod_compare_df_server, "compare_df_ui_1", df_reactive = database_vals_upload_plati)
+    callModule(mod_compare_df_server, "compare_df_ui_1", df_reactive = database_vals_upload_plati)
       
       observe({req(database_vals_upload_plati$finalise_process_compare_df)
         
@@ -189,7 +199,8 @@ mod_database_upload_plati_server <- function(input, output, session, plati_react
     
     balanta_reactiv$file_input <- input$balanta_parteneri_input$datapath
     
-    callModule(mod_read_excel_server, "read_excel_ui_1",excel_reactive = balanta_reactiv)
+    mod_read_excel_server("read_excel_ui_1",excel_reactive = balanta_reactiv )
+   # callModule(mod_read_excel_server, "read_excel_ui_1",excel_reactive = balanta_reactiv)
     
     observe({req(balanta_reactiv$all_names==TRUE)
       balanta_reactiv$prelucrata <- balanta_reactiv$file_read_prel %>% dplyr::filter(!is.na(`Partener|Cod`)) %>%
