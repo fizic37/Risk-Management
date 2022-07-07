@@ -11,6 +11,8 @@ mod_database_portofoliu_upload_ui <- function(id){
   ns <- NS(id)
   tagList(
     shinybusy::add_busy_spinner(color = "#c92052", position = "bottom-right", timeout = 200),
+    shinyjs::useShinyjs(),
+    
     fillRow(flex = c(1, NA),
       fileInput(ns("sold"),  label = "Upload fisierul de solduri",
         accept = c(".xlsx", ".xls"), buttonLabel = "Excel Only",
@@ -19,7 +21,7 @@ mod_database_portofoliu_upload_ui <- function(id){
       uiOutput(outputId = ns("date_portof_output"))  ),
     br(),
     br(),
-    br(),
+    br(), br(),
     DT::dataTableOutput(ns("sumar_portof_input")), verbatimTextOutput(ns("diverse")), br(),
     br(),
     uiOutput(ns("calculate_depreciate_output")),
@@ -49,13 +51,16 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
               'Nr contract','Valuta','Soldul garantiei [in LEI]',"Data contract",
               'Soldul creditului [in LEI]','Procentul de garantare','Tip Fond [centralizat]'),
               optional_names = c("%contragarantare", "SoldGarantieContragarantata_LEI"),
-              column_type_character = "Cod Partener")
+              colum_types = list("Cod Partener"="text","Data contract"="date",
+                "Soldul garantiei [in LEI]"="numeric", "Procentul de garantare"="numeric","ID Document" ="numeric"))
+              
   
   observeEvent(input$sold,{
     
     vals_portof_upload$file_input = input$sold$datapath
     
-    callModule(mod_read_excel_server, "read_excel_ui_1",excel_reactive = vals_portof_upload)
+    mod_read_excel_server("read_excel_ui_1", excel_reactive = vals_portof_upload)
+    #callModule(mod_read_excel_server, "read_excel_ui_1",excel_reactive = vals_portof_upload)
     
     # observer for when excel file does not contains mandatory column names
     observe({req(vals_portof_upload$all_names == FALSE)
@@ -67,24 +72,18 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
     # Below observer activates after excel module is called and the excel contains all the mandatory column names
     observe({ req(vals_portof_upload$all_names == TRUE)
       
-      # It is actually first read of the portfolio, it is just not rewritten accordingly
-      #shinyjs::disable(asis = FALSE, id = "sold")
-      
-      portofoliu_second_read <- reactive({  vals_portof_upload$file_read_prel %>%  
-          dplyr::mutate_at(.vars = c( 'Soldul garantiei [in LEI]', 'Procentul de garantare','ID Document' ),
-              .funs = as.numeric) %>% dplyr::mutate(dplyr::across(.cols = 'Cod Partener', .funs = ~as.character(.x)))    })
-      
-     
       # Check to see if I have the column SoldGarantieContragarantata_LEI or %contragarantare
-      exista_proc_ctg <- reactive ({ "%contragarantare" %in% names(portofoliu_second_read()) })
-      exista_sold_ctg <- reactive ({ "SoldGarantieContragarantata_LEI" %in% names(portofoliu_second_read()) })
+      exista_proc_ctg <- reactive ({ "%contragarantare" %in% names( vals_portof_upload$file_read_prel ) })
+      exista_sold_ctg <- reactive ({ "SoldGarantieContragarantata_LEI" %in% names( vals_portof_upload$file_read_prel ) })
       
       nu_exista_ctg <- reactive ({ if(!exista_sold_ctg() & !exista_proc_ctg()) {TRUE} 
         else {FALSE}   })
       
-      sunt_nume_lipsa <- reactive ({ vals_portof_upload$nume_obligatorii %in% names(portofoliu_second_read()) %>% all() })
+      sunt_nume_lipsa <- reactive ({ vals_portof_upload$nume_obligatorii %in% 
+          names( vals_portof_upload$file_read_prel ) %>%     all() })
       
-      nume_lipsa <- reactive ({ setdiff(vals_portof_upload$nume_obligatorii,names(portofoliu_second_read())) })
+      nume_lipsa <- reactive ({ setdiff(vals_portof_upload$nume_obligatorii,
+                                        names( vals_portof_upload$file_read_prel )) })
       
       
       
@@ -94,18 +93,19 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
         shiny::validate(shiny::need(sunt_nume_lipsa(),message = paste0("Lipseste coloana: ",
                                             nume_lipsa(),collapse = ";") %>% stringr::str_c()))
         
-        max(as.Date(portofoliu_second_read()$`Data contract`), na.rm = TRUE)    })
+        max( vals_portof_upload$file_read_prel$`Data contract`, na.rm = TRUE)    })
       
      
       # I process portfolio for contragarantii
-      portofoliu_contragarantii <- reactive ({ #shiny::validate(shiny::need(!nu_exista_ctg(),message = FALSE))
-        if (exista_sold_ctg()) {portofoliu_second_read() %>% 
+      portofoliu_contragarantii <- reactive ({ 
+        if (exista_sold_ctg()) { vals_portof_upload$file_read_prel %>% 
             dplyr::mutate(contragarantii = SoldGarantieContragarantata_LEI) %>% tidyr::replace_na(list(contragarantii=0)) }
         
-        else if (exista_proc_ctg()) {portofoliu_second_read() %>% 
-            dplyr::mutate(contragarantii=`%contragarantare` * `Soldul garantiei [in LEI]`/100) %>% tidyr::replace_na(list(contragarantii=0)) }
+        else if (exista_proc_ctg()) { vals_portof_upload$file_read_prel %>% 
+            dplyr::mutate(contragarantii=`%contragarantare` * `Soldul garantiei [in LEI]`/100) %>% 
+                    tidyr::replace_na(list(contragarantii=0)) }
         
-        else { portofoliu_second_read() %>% dplyr::mutate(contragarantii=0) }
+        else { vals_portof_upload$file_read_prel %>% dplyr::mutate(contragarantii=0) }
         
        })
       
@@ -116,19 +116,37 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
                   autoClose = TRUE,language = "ro", width = "320px")  })
       
      
-      portofoliu_surse_proprii <- reactive({portofoliu_contragarantii() %>% 
+      portofoliu_surse_proprii <- reactive({  req(portofoliu_contragarantii())
+        portofoliu_contragarantii() %>% 
           dplyr::filter(`Tip Fond [centralizat]` == sort(unique(portofoliu_contragarantii()$`Tip Fond [centralizat]`))[1]) })
       
+      duplicated_portofoliu_id <- reactive({ req( portofoliu_surse_proprii())
+        if ( length(which(duplicated(portofoliu_surse_proprii()$`ID Document`)==TRUE))>0) {"TRUE" }
+          else {"FALSE"}
+        })
+      
+      sumar_portofoliu <- reactive({ req(portofoliu_surse_proprii(), duplicated_portofoliu_id())
+        switch(EXPR = duplicated_portofoliu_id(),
+               "TRUE" = portofoliu_surse_proprii() %>% dplyr::filter(`ID Document` %in% 
+                  portofoliu_surse_proprii()$`ID Document`[which(duplicated(portofoliu_surse_proprii()$`ID Document`)==TRUE)]),
+               "FALSE" = portofoliu_surse_proprii() %>% dplyr::summarise(Nr_contracte = dplyr::n(),
+                        Sold_garantii = sum(`Soldul garantiei [in LEI]`),   Sold_contragarantii=sum(contragarantii)) %>% 
+                        dplyr::mutate(Data_raport_uploadat = input$date_portof_input) %>% 
+                          dplyr::select(4,1,2,3)) })
+      
       output$sumar_portof_input <- DT::renderDataTable({req(input$date_portof_input)
-        dt_generate_function(round_col = 2:4,caption = "Sumar portofoliu uploadat:",
-                             df = portofoliu_surse_proprii() %>% dplyr::summarise(Nr_contracte = dplyr::n(),Sold_garantii = sum(`Soldul garantiei [in LEI]`),
-                                                                                  Sold_contragarantii=sum(contragarantii)) %>% 
-                               dplyr::mutate(Data_raport_uploadat = as.character(input$date_portof_input)) %>% 
-                               dplyr::select(4,1,2,3))   })
+        
+        dt_generate_function( df = sumar_portofoliu(), show_buttons=TRUE,
+            caption = switch(EXPR = duplicated_portofoliu_id(), "TRUE" = "STOP, am gasit contractele duplicate de mai jos.
+              Verifica si uploadeaza fisierul corect", "FALSE" = "Sinteza fisier uploadat"),
+            round_col = switch(EXPR = duplicated_portofoliu_id(), "TRUE" = c(7,9,10,12,13),
+                                           "FALSE" = 2:4)) 
+      })
+          
       
       output$calculate_depreciate_output <- renderUI({req(portofoliu_surse_proprii())
-        shinyWidgets::actionBttn(ns("calculate_depreciate"),label = "Calculeaza garantiile depreciate",icon = icon("chart-area"),
-                  style = "stretch",color = "success",size = "md")   })
+        shinyWidgets::actionBttn(ns("calculate_depreciate"),style = "stretch",color = "success",size = "md",
+          label = "Calculeaza garantiile depreciate",icon = icon("chart-area") )   })
    
       observeEvent(input$calculate_depreciate,{
         
@@ -136,11 +154,27 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
         
         removeUI("#database_portofoliu_upload_ui_1-calculate_depreciate")
         
+        shinyjs::disable(id = "sold")
         
-        if (bi_sinteza$Snapshot_cereri_plata <= input$date_portof_input) {
+        if ( any(is.na(portofoliu_surse_proprii()$`ID Document`))) {
+          output$sinteza_portof_input_categorie <- DT::renderDataTable({req(portofoliu_surse_proprii())
+            dt_generate_function(df = portofoliu_surse_proprii() %>% 
+                        dplyr::filter(is.na(`ID Document`)),
+          caption="STOP, nu am gasit ID Document pentru tabelul de mai jos. Uploadeaza fisierul corect.",
+          round_col = c(7,9,10,12,13))      })
+        }
+        
+        else if (any(is.na(portofoliu_surse_proprii()$`Cod Partener`))) {
+          output$sinteza_portof_input_categorie <- DT::renderDataTable({req(portofoliu_surse_proprii())
+            dt_generate_function(df = portofoliu_surse_proprii() %>% dplyr::filter(is.na(`Cod Partener`)),
+              caption="STOP, nu am gasit Cod Partener pentru tabelul de mai jos. Uploadeaza fisierul corect.",
+              round_col = c(7,9,10,12,13)) })
+        }
+        
+        else if (bi_sinteza$Snapshot_cereri_plata <= input$date_portof_input) {
           shinyWidgets::sendSweetAlert(session = session,title = "STOP, nu am actualizat BI-ul cu cereri de plata",type = "error",showCloseButton = TRUE,
-                                       text = paste0("Eu am snapshot-ul ",as.character(bi_sinteza$Snapshot_cereri_plata)," Actualizeaza BI-ul cereri de plata
-                    in fereastra de mai jos si apoi incearca din nou pentru a putea genera categoriile depreciate!"))  }
+              text = paste0("Eu am snapshot-ul ",as.character(bi_sinteza$Snapshot_cereri_plata)," Actualizeaza BI-ul cereri de plata
+              in fereastra de mai jos si apoi incearca din nou pentru a putea genera categoriile depreciate!"))  }
         
         else if (bi_sinteza$Snapshot_instiintari_neplata <= input$date_portof_input) {
           shinyWidgets::sendSweetAlert(session = session,title = "STOP,Nu am actualizat BI-ul instiintari de neplata pentru data raportului selectata
@@ -153,17 +187,20 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
           baza_instiintari <- readRDS("R/reactivedata/bi_instiintari.rds")
           baza_insolventa <- readRDS("R/reactivedata/insolventa.rds")
           
-          portofoliu_cereri_plata <- reactive({ portofoliu_surse_proprii() %>% dplyr::left_join(y = baza_cereri_plata, by = 'ID Document') })
-          portofoliu_instiintari <- reactive({portofoliu_cereri_plata() %>% dplyr::left_join(y = baza_instiintari,by = 'ID Document') })
-          portofoliu_prelucrat <- reactive({portofoliu_instiintari() %>% dplyr::left_join(y = baza_insolventa, by=c('Cod Partener'='Cod'))  })
+          portofoliu_cereri_plata <- reactive({ portofoliu_surse_proprii() %>% dplyr::left_join(y = baza_cereri_plata, 
+                                                                                          by = 'ID Document') })
+          portofoliu_instiintari <- reactive({portofoliu_cereri_plata() %>% dplyr::left_join(y = baza_instiintari,
+                                                                                             by = 'ID Document') })
+          portofoliu_prelucrat <- reactive({portofoliu_instiintari() %>% dplyr::left_join(y = baza_insolventa, 
+                                                                                  by=c('Cod Partener'='Cod'))  })
           
           
           
           if (max(baza_insolventa$DataInsolventa) < input$date_portof_input) {
             shinyWidgets::sendSweetAlert(session=session,title = "ATENTIE",type = "warning",showCloseButton = TRUE,
-                                         text = paste0("Atentie, data maxima de insolventa pe care o am stocata ,", as.character(max(baza_insolventa$DataInsolventa)),
-                                                       ", este mai mica decat data raportului selectata de tine Acesta este doar un mesaj de atentionare, voi merge mai departe 
-                    cu prelucrarea portofoliului. Poti updatat fisierul de insolvente in ferereastra de mai jos.")) } 
+            text = paste0("Atentie, data maxima de insolventa pe care o am stocata ,", as.character(max(baza_insolventa$DataInsolventa)),
+            ", este mai mica decat data raportului selectata de tine Acesta este doar un mesaj de atentionare, voi merge mai departe 
+            u prelucrarea portofoliului. Poti updatat fisierul de insolvente in ferereastra de mai jos.")) } 
           
           
           portofoliu_categorie <- eventReactive( input$date_portof_input,{
@@ -175,15 +212,17 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
                                min_instiintare = ifelse(all(is.na(data_instiintare)), NA, min(data_instiintare, na.rm = TRUE))) %>%
               dplyr::mutate_at(.vars = dplyr::vars(dplyr::matches("min_")),  as.Date.numeric, origin = "1970-01-01") %>% as.data.frame() %>%
               dplyr::mutate(categorie_contaminata = ifelse(!is.na(min_cerere) &  min_cerere <= anul_de_raportare,"cerere_plata",
-                                                           ifelse(!is.na(min_insolventa) & min_insolventa <= anul_de_raportare,"insolventa",
-                                                                  ifelse(!is.na(min_instiintare) & min_instiintare <= anul_de_raportare,"instiintare_neplata",  "standard")  )) ) })
+                  ifelse(!is.na(min_insolventa) & min_insolventa <= anul_de_raportare,"insolventa",
+                  ifelse(!is.na(min_instiintare) & min_instiintare <= anul_de_raportare,"instiintare_neplata",  "standard")  )) ) })
           
           output$sinteza_portof_input_categorie <- DT::renderDataTable({req(portofoliu_categorie())
-            dt_generate_function(df = portofoliu_categorie() %>% dplyr::group_by(categorie_contaminata) %>% 
+              dt_generate_function(df = portofoliu_categorie() %>% dplyr::group_by(categorie_contaminata) %>% 
                                    dplyr::summarise(expunere=sum(expunere), contragarantii=sum(contragarantii)) %>% 
                                    dplyr::bind_rows(apply(X = dplyr::select(.,-1),MARGIN = 2,FUN=sum)) %>% 
                                    tidyr::replace_na(replace = list(categorie_contaminata="Total")),
-                                 caption = paste0("Sinteza portofoliu depreciat la data de ",input$date_portof_input," :"),round_col = 2:3)   })
+                                   show_buttons=TRUE,
+                                 caption = paste0("Sinteza portofoliu depreciat la data de ",
+                                                  input$date_portof_input," :"),round_col = 2:3)   })
           
           
           
@@ -271,7 +310,7 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
             DT::editData(portofoliu_provizion(), info=input[['provizion_detaliat_cell_edit']],rownames = FALSE) })
           
           output$sinteza_portof_input_categorie <- DT::renderDataTable({
-            dt_generate_function(caption = paste0("Sinteza portofoliu depreciat si provizioane la data de ",input$date_portof_input," :"),
+             dt_generate_function(caption = paste0("Sinteza portofoliu depreciat si provizioane la data de ",input$date_portof_input," :"),
                        show_buttons = T, round_col = 2:4,  df = portofoliu_provizion() %>% dplyr::group_by(categorie_contaminata) %>% 
                                    dplyr::summarise(expunere=sum(expunere),contragarantii=sum(contragarantii),provizion=sum(provizion_contabil)) %>% 
                                    dplyr::bind_rows(apply(X = dplyr::select(.,-1),MARGIN = 2,FUN=sum)) %>% 

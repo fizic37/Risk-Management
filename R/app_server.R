@@ -43,9 +43,9 @@ app_server <- function( input, output, session ) {
     
     if (sum("ifrs" == vals$sidebar_selected)==1) {
       callModule(mod_ifrs_portofoliu_server, "ifrs_portofoliu_ui_1", vals_portofoliu, parrent_session=session)
-      mod_ifrs_database_server("ifrs_database_ui_1")
-      mod_new_ifrs_server("new_ifrs_ui_1", vals_portofoliu, parrent_session=session)
-      mod_new_ifrs_database_server("new_ifrs_database_ui_1")
+      mod_ifrs_calculate_server("ifrs_calculate_ui_1", vals_portofoliu, parrent_session=session)
+      #mod_updated_new_ifrs_server("updated_new_ifrs_ui_1",vals_portofoliu, parrent_session=session)
+      mod_updated_new_database_ifrs_server("updated_new_database_ifrs_ui_1")
       vals$sidebar_selected <- c(vals$sidebar_selected,"ifrs")   }
     
     if (sum("admin" == vals$sidebar_selected)==1) {

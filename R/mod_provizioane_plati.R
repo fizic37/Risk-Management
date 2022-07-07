@@ -17,7 +17,7 @@ mod_provizioane_plati_ui <- function(id){
     bs4Dash::box( title = "Word- regularizare provizion plati", status = "info",  width = 12,
                   collapsible = T,  collapsed = TRUE,maximizable = TRUE, icon = icon("file-word"),
                   footer = "Aici se genereaza adresa Word catre Contabilitate privind regularizarea provizioanelor specifice
-                  la datele selectate mai sus.",
+                  la datele selectate mai sus.", id = ns("box_word_plati"),
                   fluidRow(    column( width = 3,
                       selectInput(  inputId = ns("from_plati"), label = "Selecteaza data initiala:",
                         choices = "",    width = "300px")        ),
@@ -39,7 +39,7 @@ mod_provizioane_plati_ui <- function(id){
                  apoi se uploadeaza.",  id = ns("box_upload_plati"),
                  mod_database_upload_plati_ui("database_upload_plati_ui_1")),
     
-    bs4Dash::box(title = "Baza de date a provizioanelor pentru plati",collapsed = FALSE,
+    bs4Dash::box(title = "Baza de date a provizioanelor pentru plati",collapsed = FALSE, id = ns("box_database_plati"),
                         width=12,collapsible = T,status = "info",maximizable = T, icon = icon("database"),
                         
                  DT::dataTableOutput(ns("database_plati")),
@@ -48,7 +48,7 @@ mod_provizioane_plati_ui <- function(id){
                  tags$script(paste0("plati_module_js('", ns(''), "')"))),
     
     bs4Dash::box(title = "Coeficienti provizioane plati",width = 12, icon = icon("subscript"),
-                collapsed=FALSE,collapsible=TRUE, maximizable=TRUE, status="info", id = ns("box_coeficienti_plati"),
+                collapsed=TRUE,collapsible=TRUE, maximizable=TRUE, status="info", id = ns("box_coeficienti_plati"),
                 mod_coeficienti_plati_ui("coeficienti_plati_ui_1") )
     
   )

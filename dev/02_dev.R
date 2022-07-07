@@ -48,7 +48,7 @@ usethis::use_package("rlang")
 ## Create a module infrastructure in R/
 golem::add_module( name = "sidebar" ) # Name of the module
 golem::add_module( name = "calibrare" ) # Name of the module
-golem::add_module(name = "coeficienti_portofoliu" )
+golem::add_module(name = "ifrs_calculate" )
 
 
 ## Add helper functions ----
@@ -58,7 +58,7 @@ golem::add_utils(name = "functions_portofoliu",module = "database_portofoliu")
 
 ## External resources
 ## Creates .js and .css files at inst/app/www
-golem::add_js_file( "script" )
+golem::add_js_file( "mod_home" )
 golem::add_js_handler( "handlers" )
 golem::add_css_file( "custom" )
 

@@ -35,9 +35,9 @@ mod_sidebar_server <- function(id, vals){
       
       bs4Dash::menuItem(tabName = "crc",text = "CRC si CIP", icon = icon("copyright"), selected = F),
       
-      bs4Dash::menuItem(tabName = "ifrs",text = "IFRS9", icon = icon("italic"), selected = F),
+      bs4Dash::menuItem(tabName = "ifrs",text = "IFRS9", icon = icon("italic"), selected = TRUE),
       
-      bs4Dash::menuItem(tabName = "admin",text = "Admin", icon = icon("lock-open"), selected = TRUE)
+      bs4Dash::menuItem(tabName = "admin",text = "Admin", icon = icon("lock-open"), selected = FALSE)
       
     )
     

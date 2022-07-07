@@ -26,7 +26,7 @@ mod_database_portofoliu_ui <- function(id){
                  footer =  "Se uploadeaza intregul fisier de solduri disponibil pe fileserver - Provizioane.",
                  mod_database_portofoliu_upload_ui("database_portofoliu_upload_ui_1") ),
       
-    bs4Dash::box( title = "Database portfolio", icon = icon("database"), 
+    bs4Dash::box( title = "Database portfolio", icon = icon("database"), id = ns("box_plati_database"),
                   maximizable = T,
                         status = "info",width = 12,collapsible = TRUE,collapsed = TRUE,
                        
@@ -125,7 +125,8 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
         '<div class="btn-group" style="width: 75px;" role="group" aria-label="Basic example">
           <button class="btn btn-sm download_btn" data-toggle="tooltip" data-placement="top" title="Download" id = ', 
           id_, ' style="margin: 0; color: #20c997;"><i class="fa fa-download"></i></button>
-          <button class="btn btn-danger btn-sm delete_btn" data-toggle="tooltip" data-placement="top" title="Delete" id = ', id_, ' style="margin: 0"><i class="fa fa-trash-o"></i></button>
+          <button class="btn btn-danger btn-sm delete_btn" data-toggle="tooltip" data-placement="top" title="Delete" id = ', id_,
+          ' style="margin: 0"><i class="fa fa-trash-o"></i></button>
         </div>'
       )  })
     
@@ -254,7 +255,7 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
   #### MIGRATION
   
      
-  observeEvent(input$start_migration,{
+  observeEvent( input$start_migration,{
     vals_portofoliu$lista_provizion_non_ifrs <- portofoliu_database %>% 
       dplyr::group_by(`Cod Partener`,anul_de_raportare,categorie_contaminata) %>% 
       dplyr::summarise(expunere = sum(expunere),provizion_contabil=sum(provizion_contabil)) %>% dplyr::ungroup() %>%
@@ -389,7 +390,7 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
     
     bi_cui_existent <- readRDS("R/reactivedata/bi_cui.rds")
     
-  
+    
     output$down_intrari_deprec <- downloadHandler(filename = function() {"intrari_deprec.csv"},
         content = function(file) {readr::write_csv( file = file,
           x =  vals_portofoliu$depreciate_curenta %>% 

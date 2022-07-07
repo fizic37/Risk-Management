@@ -15,10 +15,12 @@ mod_coeficienti_portofoliu_ui <- function(id){
                          choices = as.Date("2019-12-31"),
                          selected = as.Date("2019-12-31"),width = "300px") ),
     column(width = 4, shinyWidgets::airDatepickerInput(inputId = ns("data_cerere_plata"),
-                  label = "Selecteaza data maxima a cererii de plata",value = Sys.Date(),
+                  label = "Selecteaza data maxima a cererii de plata",value = as.Date("2021-12-31"),
                   todayButton = TRUE,autoClose = TRUE,language = "ro", width = "300px")),
     column(width = 4, br(),downloadButton(outputId = ns("down_cereri_plata"),label = "Download cererile de plata filtrate"))
     ),
+    
+    verbatimTextOutput(ns("diverse")),
              DT::dataTableOutput(ns("rata_cereri_plata")),
              br(),
              fillRow(flex = c(1,NA),actionButton(inputId = ns("view_rata_cereri"),label = "Change view - percentage/brute",
@@ -36,7 +38,6 @@ mod_coeficienti_portofoliu_server <- function(id, vals_portofoliu){
     
     ns <- session$ns
     
-    
     baza_citita <- readRDS(file = "R/reactivedata/portofoliu/portof_database.rds")
     
     cereri_plata <- readRDS(file = "R/reactivedata/plati/external_volume/cereri_plata.rds") %>% 
@@ -51,19 +52,20 @@ mod_coeficienti_portofoliu_server <- function(id, vals_portofoliu){
     })
     
     observeEvent( vals_portof_coef$cereri_plata,{
-    shinyWidgets::updateAirDateInput(session = session,inputId = "data_cerere_plata",
-                                     value = max(vals_portof_coef$cereri_plata$Data_cerere_plata))
+      shinyWidgets::updateAirDateInput(session = session,inputId = "data_cerere_plata",
+                                       value = as.Date("2022-01-14")
+                                       #max(vals_portof_coef$cereri_plata$Data_cerere_plata)
+      )
     }, once = TRUE)
     
-    
-    # Below reactive is used to calculate cereri plata depending on input$data_cerere_plata and input$select_year_portof
     to_listen <- reactive({ list(input$data_cerere_plata, input$select_year_portof) })
     
     observeEvent( to_listen(),{
       
+      
       vals_portof_coef$cereri_plata_filtrata <- vals_portof_coef$cereri_plata %>% 
         dplyr::filter(Data_cerere_plata > input$select_year_portof & Data_cerere_plata <= input$data_cerere_plata) %>%
-       dplyr::group_by(`Cod Partener`, an_cerere_plata) %>%
+        dplyr::group_by(`Cod Partener`, an_cerere_plata) %>%
         dplyr::summarise(Cerere_Plata = sum(Cerere_Plata)) %>%
         dplyr::mutate(Cerere_Plata_cumulata = cumsum(Cerere_Plata)) %>% dplyr::ungroup()
       
@@ -71,17 +73,17 @@ mod_coeficienti_portofoliu_server <- function(id, vals_portofoliu){
       output$down_cereri_plata <- downloadHandler( filename = function() { 
         paste0( "cereri_plata_", input$data_cerere_plata,".csv" ) },
         content = function(file) { readr::write_csv(x =  cereri_plata %>% 
-            dplyr::filter(Data_cerere_plata > input$select_year_portof & Data_cerere_plata <= input$data_cerere_plata) %>%
-                dplyr::select(-an_cerere_plata),file = file )   } )
+                                                      dplyr::filter(Data_cerere_plata > input$select_year_portof & Data_cerere_plata <= input$data_cerere_plata) %>%
+                                                      dplyr::select(-an_cerere_plata),file = file )   } )
       
       vals_portof_coef$cereri_plata_splitata <- split(
         vals_portof_coef$cereri_plata_filtrata,
         vals_portof_coef$cereri_plata_filtrata$an_cerere_plata )
       
-    # I rename columns in cereri_plata_splitata. Rename_col function is to be found in mod_portofoliu_utils
+      # I rename columns in cereri_plata_splitata. Rename_col function is to be found in mod_portofoliu_utils
       vals_portof_coef$cereri_plata_splitata_prel <- purrr::map(vals_portof_coef$cereri_plata_splitata,~rename_col(df=.x))
       
-      })
+    })
     
     
     observeEvent(input$select_year_portof,{
@@ -90,41 +92,44 @@ mod_coeficienti_portofoliu_server <- function(id, vals_portofoliu){
         dplyr::group_by(`Cod Partener`,categorie_contaminata) %>%  dplyr::summarise(expunere=sum(expunere))
     })
     
+    
+    
     # Below reactive is used in the final observer where I calculate final tables depending on modifications in baza selectata
     # sau cereri_plata_splitata_prel
     
-    final_calculation <- reactive({  list(vals_portof_coef$cereri_plata_splitata_prel,vals_portof_coef$baza_selectata)  })
+    #final_calculation <- reactive({  list(vals_portof_coef$cereri_plata_splitata_prel,vals_portof_coef$baza_selectata)  })
+    
+    
     
     # Final observer
-    observeEvent(  final_calculation(), { 
+    observeEvent(  c(vals_portof_coef$cereri_plata_splitata_prel,vals_portof_coef$baza_selectata),{ 
       # I will not obtain final filtered process because, for example, if a CUI has cereri_plata during years 2015 and 2016
       # below code will produce cumulated cereri_plata in 2015 and 2016 but will only show 0 for 2017 and subsequent years
       vals_portof_coef$baza_selectata_procesata <-   purrr::map_df(
         .x = vals_portof_coef$cereri_plata_splitata_prel,
-        .f = ~ dplyr::left_join(
-          x = vals_portof_coef$baza_selectata,
-          y = dplyr::select(
-            .data = .x,
-            `Cod Partener`,
-            dplyr::contains("Cerere_Plata_cumulata")
-          ),
-          by = "Cod Partener"
-        )
-      ) %>%
-        dplyr::select(`Cod Partener`,   categorie_contaminata, dplyr::contains("Cerere_Plata_cumulata"))%>%
-        dplyr::group_by(`Cod Partener`, categorie_contaminata) %>%
+        .f = ~ dplyr::left_join(  x = vals_portof_coef$baza_selectata,
+          y = dplyr::select(.data = .x,   `Cod Partener`,  dplyr::contains("Cerere_Plata_cumulata")  ),
+          by = "Cod Partener" ) ) %>% dplyr::select(`Cod Partener`,   categorie_contaminata, dplyr::contains("Cerere_Plata_cumulata")) %>%
+        dplyr::group_by(`Cod Partener`, categorie_contaminata)  %>%
         dplyr::summarise_at(dplyr::vars(-dplyr::group_cols()), sum, na.rm = T) %>% dplyr::ungroup() %>%
         #I add back expunere
-        dplyr::left_join(y = vals_portof_coef$baza_selectata[, c("Cod Partener", "expunere")], by = "Cod Partener")
+        dplyr::left_join(y = vals_portof_coef$baza_selectata %>% dplyr::select(`Cod Partener`, expunere), by = "Cod Partener")   
       
-      # I get my final dataframe with cumulated Cerere_plata_cumulata
-      vals_portof_coef$baza_selectata_final <- cbind(dplyr::select(vals_portof_coef$baza_selectata_procesata,
-                                                                   `Cod Partener`,categorie_contaminata,expunere),
-                                                     max_col(dplyr::select(vals_portof_coef$baza_selectata_procesata,dplyr::contains("Cerere_plata_cumulata")))) # This cumulates Cere_plata_cumulata
-      
-      output$down_rata_cereri <- downloadHandler(filename = function(){ paste0("migration_from_",input$select_year_portof,".csv")},
-              content = function(file) { readr::write_csv(x = vals_portof_coef$baza_selectata_final,file = file) })
-      
+      vals_portof_coef$baza_selectata_final <-
+        cbind(
+          dplyr::select(
+            vals_portof_coef$baza_selectata_procesata,
+            `Cod Partener`,
+            categorie_contaminata,
+            expunere
+          ),
+          max_col(
+            dplyr::select(
+              vals_portof_coef$baza_selectata_procesata,
+              dplyr::contains("Cerere_plata_cumulata")
+            )
+          )
+        ) # This cumulates Cere_plata_cumulata
       vals_portof_coef$tabel_rata_cerere_plata <-   vals_portof_coef$baza_selectata_final  %>% dplyr::select(-`Cod Partener`) %>% 
         dplyr::filter(categorie_contaminata!="cerere_plata") %>% dplyr::group_by(categorie_contaminata) %>% 
         dplyr::summarise_at(.vars = dplyr::vars(-dplyr::group_cols()),sum) %>% dplyr::ungroup()
@@ -147,11 +152,19 @@ mod_coeficienti_portofoliu_server <- function(id, vals_portofoliu){
               "Rata de trasformare in cerere de plata a garantiilor in sold la ",
               as.character(input$select_year_portof)  )  )  } 
       })
+      
+      
+      output$down_rata_cereri <- downloadHandler(filename = function(){ paste0("migration_from_",input$select_year_portof,".csv")},
+                                                 content = function(file) { readr::write_csv(x = vals_portof_coef$baza_selectata_final,file = file) })
+      
+      
     })
     
    
     
+    
   })
+    
 }
     
 ## To be copied in the UI
