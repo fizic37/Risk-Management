@@ -13,6 +13,22 @@ mod_admin_ui <- function(id){
     shinybusy::add_busy_spinner(color = "#c92052", position = "bottom-right", timeout = 200),
     shinyFeedback::useShinyFeedback(),
     
+    
+    bs4Dash::box( title="Upload modelul de adresa catre contabilitate - Provizioane Specifice",
+                  status = "info",width = 12, collapsible = T, collapsed = T,
+                  maximizable = TRUE, icon = icon("file-word"),
+                  footer = "Atentie, nu voi prelucra upload-ul tau. 
+                  Doar il voi salva si voi incerca sa scriu in el info updatate.",
+                  
+                  fluidRow(column(width = 3, fileInput(inputId = ns("upload_doc"),
+                                  label = "Uploadeaza modelul de adresa",accept = c(".docx"),
+                                  placeholder = "nothing uploaded",buttonLabel = "docx only")),
+                           
+                           column(width = 8, div(style = "padding-top: 24px; padding-left: 190px;",
+                                  shinyWidgets::downloadBttn(outputId = ns("down_doc"),
+                                  label = "Downloadeaza modelul existent de adresa",
+                                  style = "stretch",color = "success")))) ),
+    
     bs4Dash::box( title="Coeficienti de provizionare garantii depreciate",
                  status = "info",width = 12, collapsible = T, collapsed = T,
                  maximizable = TRUE, icon = icon("square-root-alt"),
@@ -67,6 +83,17 @@ mod_admin_server <- function(id){
       ". Click in tabel pentru a actualiza")), rownames = FALSE, options = list(dom = "t"), class = "compact") %>%
         DT::formatPercentage(columns = 1:3,digits = 1) %>% DT::formatStyle(color = "#919191",columns = 1:5)
       })
+    
+    
+    observeEvent(input$upload_doc,{ shiny::validate( shiny::need(expr = tools::file_ext(input$upload_doc$datapath) == "docx",
+                                  message = "Docx only") )
+      file.copy(from = input$upload_doc$datapath, to = "template_provizioane_plati.docx",overwrite = TRUE)
+      shinyFeedback::showToast(type = "success",title = "SUCCES",message = "Am salvat cu succes modelul de adresa",
+      .options = list("timeOut"=1000, 'positionClass'="toast-bottom-right", "progressBar" = TRUE) )
+    })
+    
+    output$down_doc <- downloadHandler(filename = function() {"template_provizioane_plati.docx"},
+            content = function(file) {file.copy(from = "template_provizioane_plati.docx",to = file, overwrite = TRUE ) } )
     
     observeEvent(input$scenarii_rows_selected,{
       showModal(modalDialog(title = "New scenarios", size = "l", footer = list(modalButton("Cancel"),
