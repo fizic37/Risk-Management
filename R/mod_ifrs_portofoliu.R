@@ -10,14 +10,20 @@
 mod_ifrs_portofoliu_ui <- function(id){
   ns <- NS(id)
   bs4Dash::tabsetPanel(id = ns("ifrs_panel"),  selected = T,type = "pills",
-  
-           
-        tabPanel(title = "New database IFRS9", icon = icon("database"),value = "new_database_ifrs",
-                 mod_new_ifrs_database_ui("new_ifrs_database_ui_1")),
+        
+        tabPanel(title = "New Updated database IFRS9",icon = icon("database"),value = "new_updated_database_ifrs9",
+                 mod_updated_new_database_ifrs_ui("updated_new_database_ifrs_ui_1")),
+                       
+                       
+        tabPanel(title = "New Updated provizioane IFRS9",icon = icon("square-plus"),value = "new_updated_ifrs9",
+                 mod_ifrs_calculate_ui("ifrs_calculate_ui_1")),
+        
+        #tabPanel(title = "New database IFRS9", icon = icon("database"),value = "new_database_ifrs",
+             #    mod_new_ifrs_database_ui("new_ifrs_database_ui_1")),
         
         
-        tabPanel(title = "New calcul provizioane IFRS9",icon = icon("calculator"),
-                 mod_new_ifrs_ui("new_ifrs_ui_1")),
+        #tabPanel(title = "New calcul provizioane IFRS9",icon = icon("calculator"),
+             #    mod_new_ifrs_ui("new_ifrs_ui_1")),
       
          #tabPanel(title = "Calcul Provizioane IFRS9", icon = icon("square-root-alt"),
              #     tagList( br(),
@@ -57,7 +63,18 @@ mod_ifrs_portofoliu_ui <- function(id){
                                                 bs4Dash::accordionItem(
                                                   title = "Training and test data dimensions",
                                                   status = "info",collapsed = TRUE,
-                                                  DT::dataTableOutput(ns("sumar_dezvoltare_model_1Y"))),
+                                                  DT::dataTableOutput(ns("sumar_dezvoltare_model_1Y")),
+                                                  br(),
+                                                 fillRow(flex = c(1,NA),
+                                                  downloadButton(ns("down_train1Y_crc"),
+                                                                 label = "Training 1Y CRC"),
+                                                  downloadButton(ns("down_test1Y_crc"),
+                                                                 label = "Testing 1Y CRC"),
+                                                  downloadButton(ns("down_train1Y_no_crc"),
+                                                                 label = "Training NO crc"),
+                                                  downloadButton(ns("down_test1Y_no_crc"),
+                                                                 label = "Testing NO crc"))
+                                                  ),
                                                 bs4Dash::accordionItem(
                                                   title = "AUC for the 2 models",
                                                   status = "info",collapsed = TRUE,
@@ -118,7 +135,7 @@ mod_ifrs_portofoliu_server <- function(input, output, session, vals_portofoliu, 
   
   ns <- session$ns
   
-  updateTabsetPanel(session = session, inputId = 'ifrs_panel',selected = "new_database_ifrs")
+  updateTabsetPanel(session = session, inputId = 'ifrs_panel',selected = "new_updated_database_ifrs9")
   
   output$info <- renderText({ req(input$show_info == TRUE) 
     "Apasand butonul calculeaza de mai sus se vor genera provizioanele IFRS9 pentru portofoliul de garantii la data selectata.
@@ -281,11 +298,7 @@ mod_ifrs_portofoliu_server <- function(input, output, session, vals_portofoliu, 
  
     
     
- 
-      
-   
-  
-  output$sumar_dezvoltare_model_1Y <- DT::renderDataTable({ dt_generate_function(round_col = 2,
+ output$sumar_dezvoltare_model_1Y <- DT::renderDataTable({ dt_generate_function(round_col = 2,
             df = modelling_results %>% dplyr::filter(stringr::str_detect(indicator,pattern = "nr_observatii")) %>% 
               dplyr::filter(stringr::str_detect(indicator,pattern = "1Y")))})
  
