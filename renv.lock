@@ -261,13 +261,6 @@
       "Repository": "CRAN",
       "Hash": "a0cbe758a531d054b537d16dff4d58a1"
     },
-    "dockerfiler": {
-      "Package": "dockerfiler",
-      "Version": "0.1.4",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "e96dd3b237b2f38a2955f4bf41e047a1"
-    },
     "dplyr": {
       "Package": "dplyr",
       "Version": "1.0.7",
@@ -389,10 +382,10 @@
     },
     "golem": {
       "Package": "golem",
-      "Version": "0.3.1",
+      "Version": "0.3.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "0eaf594de1dcbcd37c6d79806d57b473"
+      "Hash": "b396a44b56209da3733a4a906b0cc457"
     },
     "gtable": {
       "Package": "gtable",

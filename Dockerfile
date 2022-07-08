@@ -26,7 +26,7 @@ RUN Rscript -e 'remotes::install_version("readxl",upgrade="never", version = "1.
 RUN Rscript -e 'remotes::install_version("readr",upgrade="never", version = "2.1.0")'
 RUN Rscript -e 'remotes::install_version("qdapRegex",upgrade="never", version = "0.7.2")'
 RUN Rscript -e 'remotes::install_version("janitor",upgrade="never", version = "2.1.0")'
-RUN Rscript -e 'remotes::install_version("golem",upgrade="never", version = "0.3.1")'
+RUN Rscript -e 'remotes::install_version("golem",upgrade="never", version = "0.3.2")'
 RUN Rscript -e 'remotes::install_version("glmnet",upgrade="never", version = "4.1-2")'
 RUN Rscript -e 'remotes::install_version("DT",upgrade="never", version = "0.19")'
 RUN Rscript -e 'remotes::install_version("bs4Dash",upgrade="never", version = "2.0.1")'
