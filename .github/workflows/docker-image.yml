@@ -40,5 +40,5 @@ jobs:
       uses: docker/build-push-action@v2
       with:
           push: true
-          tags: ${{ steps.docker_meta.outputs.tags }}
+          tags: ghcr.io/fizic37/risk_management:latest  #${{ steps.docker_meta.outputs.tags }}
           file: ./Dockerfile
