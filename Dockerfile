@@ -1,8 +1,14 @@
 FROM rocker/r-ver:4.1.0
+<<<<<<< HEAD
+RUN apt-get update && apt-get install -y  git-core libcurl4-openssl-dev libgit2-dev libicu-dev libssl-dev libxml2-dev make pandoc pandoc-citeproc zlib1g-dev && rm -rf /var/lib/apt/lists/*
+RUN echo "options(repos = c(CRAN = 'https://cran.rstudio.com/'), download.file.method = 'libcurl', Ncpus = 4)" >> /usr/local/lib/R/etc/Rprofile.site
+RUN R -e 'install.packages("remotes")'
+=======
 RUN apt-get update && apt-get install -y  git-core libcurl4-openssl-dev libgit2-dev libicu-dev libssl-dev libxml2-dev make pandoc pandoc-citeproc && rm -rf /var/lib/apt/lists/*
 RUN echo "options(repos = c(CRAN = 'http://cran.rstudio.com/'), download.file.method = 'libcurl', Ncpus = 4)" >> /usr/local/lib/R/etc/Rprofile.site
 #RUN R -e 'install.packages("remotes")'
 RUN R -e 'renv::install("remotes")'
+>>>>>>> da88c44e195dad267cb4b62f610d4c7c5d86895e
 RUN Rscript -e 'remotes::install_version("htmltools",upgrade="never", version = "0.5.2")'
 RUN Rscript -e 'remotes::install_version("rlang",upgrade="never", version = "0.4.11")'
 RUN Rscript -e 'remotes::install_version("magrittr",upgrade="never", version = "2.0.1")'
@@ -38,4 +44,5 @@ WORKDIR /build_zone
 RUN R -e 'remotes::install_local(upgrade="never")'
 #RUN rm -rf /build_zone
 EXPOSE 80
-CMD R -e "options('shiny.port'=80,shiny.host='0.0.0.0',shiny.maxRequestSize=40*1024^2);RiskManagement::run_app()"
+CMD R -e "options('shiny.port'=80,shiny.host='0.0.0.0');RiskManagement::run_app()"
+
