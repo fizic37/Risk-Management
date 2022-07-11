@@ -15,10 +15,12 @@ mod_cip_ui <- function(id){
       shinyFeedback::useShinyFeedback(feedback = TRUE,toastr = TRUE),
       shinyjs::useShinyjs(),
    
-      column(width = 6,fileInput(inputId = ns("cip_input"), width = "300px",
+      column(width = 4,fileInput(inputId = ns("cip_input"), width = "300px",
                                  accept = '.csv',buttonLabel = 'CSV only',label = "Upload CIP file")),
       
-      column(width = 6, br(), uiOutput(ns("save_cip_output") )),
+      column(width = 4, br(), uiOutput(ns("save_cip_output") )),
+      
+      column(width = 4, uiOutput(ns("show_upload_messages"))),
       
       column(width = 12, DT::dataTableOutput(ns("cip_upload_sumar")) ),
       
@@ -44,7 +46,9 @@ mod_cip_server <- function(input, output, session) {
   
   vals_cip <- reactiveValues(view_cip_database = view_cip_database)
   
-  
+  nume_obligatorii_cip <- c("Data situatie risc global", "Cod debitor",  "Nume debitor",
+                            "Total CEC-uri",  "Total cambii", "Total bilete la ordin","CEC-uri majore",
+                            "Cambii majore", "Bilete la ordin majore", "Per de interdictie bancara")
   # Key observer. Everytime it updates I update actions and render teh main table.
   # Note I do not save it, as it will be saved from the beginning. I only save it inside vals_cip$baza_date_cip observer
   observeEvent(vals_cip$view_cip_database,{
@@ -147,11 +151,22 @@ mod_cip_server <- function(input, output, session) {
  
   # Observer for CIP upload. I have used reactive() so save upload observer is nested inside upload observer in order to 
  # have access to values stored with reactive(). 
+  
   observeEvent(input$cip_input,{
    
+    check_cip_names <- reactive( { req(input$cip_input)
+      nume_citite <- names(readr::read_csv(input$cip_input$datapath,n_max = 10))
+      
+      if( nume_citite %in% nume_obligatorii_cip %>% all() ) {"0" } else {
+        vals_cip$nume_lipsa <- setdiff(nume_obligatorii_cip, nume_citite)
+        "1" }
+    })
    # Main processing line of cip upload file
-   CIP <- reactive({shiny::validate(shiny::need(tools::file_ext(input$cip_input$datapath)=="csv",message = paste0("CSV only. You uploaded a ", 
-                       tools::file_ext(input$cip_input$datapath), " file.")))
+   CIP <- reactive({ req( check_cip_names() == "0" )
+     
+     shiny::validate(shiny::need(tools::file_ext(input$cip_input$datapath)=="csv",message = paste0("CSV only. You uploaded a ", 
+                        tools::file_ext(input$cip_input$datapath), " file.")))
+     
      readr::read_csv(input$cip_input$datapath, col_types = readr::cols(
        `Data situatie risc global` = readr::col_date(format = "%m/%d/%Y 12:00:00 AM"),
        `Cod debitor` = readr::col_double(),  `Nume debitor` = readr::col_character(),
@@ -176,23 +191,38 @@ mod_cip_server <- function(input, output, session) {
                   dplyr::select(CUI=`Cod debitor`,total_incidente,  total_incidente_majore,Este_in_interdictie,A_fost_interdictie,
                      bilete_majore = `Bilete la ordin majore`,data_raport=`Data situatie risc global`)   })
    
-   cip_upload_sumar <- reactive({ CIP() %>% dplyr::group_by(data_raport) %>% dplyr::summarise(Nr_beneficiari_raportati = dplyr::n_distinct(CUI),
+   cip_upload_sumar <- reactive({ CIP() %>% dplyr::group_by(data_raport) %>% 
+       dplyr::summarise(Nr_beneficiari_raportati = dplyr::n_distinct(CUI),
               beneficiari_interdictie=sum(Este_in_interdictie), Nr_mediu_incidente_majore=mean(total_incidente_majore),
               Median_incidente_majore=median(total_incidente_majore)) %>% dplyr::ungroup() })
    
+    
+    
+    
+   data_upload_cip <- reactive({ req( check_cip_names() == "0")
+     
+     cip_upload_sumar()$data_raport  })
    
-   data_upload_cip <- reactive({ cip_upload_sumar()$data_raport  })
-   
-   output$cip_upload_sumar <- DT::renderDataTable({req(cip_upload_sumar())
+   output$cip_upload_sumar <- DT::renderDataTable({req( check_cip_names() == "0", cip_upload_sumar() )
      dt_generate_function(round_col = 2:5,caption = "Sinteza fisier uploadat:", df = cip_upload_sumar()) })
    
-
+  
   output$save_cip_output <- renderUI({ req(cip_upload_sumar())
-   actionButton(inputId = ns("save_cip_upload"),label = "Save CIP upload",icon = icon("save"),width = "300px")  })
+    div (style="display:inline-block;margin-left: 20%;padding-top: 5px;",
+   shinyWidgets::actionBttn(inputId = ns("save_cip_upload"),style = "stretch",color = "success",
+                  label = "Save CIP upload",icon = icon("save") ) )  })
+  
+   output$show_upload_messages <- renderUI( {  req( check_cip_names() )
+     switch ( check_cip_names(),
+              "0" = div (style="display:inline-block;margin-left: 20%;padding-top: 25px;color: #20c997;font-size: 1.2rem;",
+                          "Fisierul CIP a fost prelucrat cu succes"),
+              "1" = div (style="display:inline-block;margin-left: 20%;padding-top: 23px;color: #c94220;font-size: 1rem;",
+                         paste0("STOP, lipsesc coloanele: ",paste0(vals_cip$nume_lipsa,collapse = ";")) %>% stringr::str_c()) )        
+     })
   
  
   # I nest save observer inside cip$input observer in order to have access to reactive values that are isolated within observeEvent.
-
+ 
   observeEvent(input$save_cip_upload,{
       
       removeUI("#cip_ui_1-cip_upload_sumar")
