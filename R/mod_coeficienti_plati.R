@@ -9,15 +9,16 @@
 #' @importFrom shiny NS tagList 
 mod_coeficienti_plati_ui <- function(id){
   ns <- NS(id)
-  tagList(
-    bs4Dash::box(title = "Data raport plati",width = 12,collapsible = TRUE,status = "danger",collapsed = T,
+  tagList(       shinyFeedback::useShinyFeedback(),
+    
+    bs4Dash::box(title = "Data raport plati",width = 12,collapsible = TRUE,status = "danger",collapsed = FALSE,
                  icon = icon("calendar-check"), footer = "Aici se selecteaza data de la care 
                  se calculeaza coeficientii de mai jos.",
                  shinyWidgets::airDatepickerInput(ns("data_raport_plati"),value = as.Date("2019-12-31"),
                             label = "Selecteaza de aici data raportului", width = "300px",autoClose = TRUE)),
     
     bs4Dash::box(title = "Sensibilitate provizioane plati",status = "info",
-                 collapsible = T,collapsed = T,width = 12, icon = icon("calculator"),
+                 collapsible = TRUE,collapsed = FALSE,width = 12, icon = icon("calculator"),
                  footer = "Aici se calculeaza senzitivitatea provizioanelor specifice in functie de
                  coeficientii editabili de mai sus.",
                         column(width = 12, fillRow(flex = c(1, NA), numericInput(inputId = ns("coef_garantii_plati"), 
@@ -28,17 +29,25 @@ mod_coeficienti_plati_ui <- function(id){
                                hr(),  DT::dataTableOutput(ns("sumar_simulare")))),
     
     bs4Dash::box(title = "Grad anual de recuperare creante nete",status = "info",
-                 width = 12,collapsible = T,collapsed = T,
+                 width = 12,collapsible = TRUE,collapsed = FALSE,
                         column(width = 12,DT::dataTableOutput(ns("sumar_creante"))),
                         column(width=12,br()),
                         column(width = 6,downloadButton(outputId = ns("down_sumar_creante"),
                                 label = "Download detaliat creante recuperate"))),
     
-    bs4Dash::box(title = "Grad recuperare expunere CTG",status = "info",width = 12,collapsible = T,collapsed = F,
-                        column(width = 12,DT::dataTableOutput(ns("sumar_recuperari_ctg"))),
-                        column(width=12,br()),
+    bs4Dash::box(title = "Grad recuperare expunere CTG",status = "info",width = 12,collapsible = TRUE,collapsed = FALSE,
+        footer = "Aici se calculeaza gradul de recuperare a expunerii IFRS9 din contragarantare. Ai grija sa actualizezi 
+        recuperarile conform instructiunilor",
+                 fluidRow(       
+                 column(width = 8, verbatimTextOutput(ns("mesaj_data_ctg"))),
+                 column(width = 4, shinyWidgets::actionBttn(ns("show_ctg_upload"), size = "md",
+                      label = "Click aici pentru a updata FRC",style = "stretch",color = "success",icon = icon("upload"))),
+                 column(width = 12, hr(),
+                        DT::dataTableOutput(ns("sumar_recuperari_ctg")), br()),
+                       
                         column(width=12,downloadButton(outputId = ns("down_recuperare_ctg"),
                                         label = "Download detaliat"))))
+  )
   
 }
     
@@ -48,6 +57,10 @@ mod_coeficienti_plati_ui <- function(id){
 mod_coeficienti_plati_server <- function(input, output, session, plati_reactive){
   # Server processing for box coeficienti plati
   ns <- session$ns
+  
+  baza_frc <- readRDS(file = "R/reactivedata/plati/incasari_frc.rds")
+  
+  vals_coef_plati <- reactiveValues( baza_frc = baza_frc )
   
   observeEvent(plati_reactive,{
   
@@ -130,10 +143,51 @@ mod_coeficienti_plati_server <- function(input, output, session, plati_reactive)
   
   # FRC grad de recuperare
   
-  frc <- readxl::read_excel("R/reactivedata/plati/incasari_frc.xlsx",col_types = c("numeric","text","date","numeric"))
-  frc$`Data incasarii` <- as.Date(frc$`Data incasarii`)
   
-  baza_selectata_frc <- reactive({ dplyr::left_join(baza_selectata(),y = frc[,-2],by="DocumentId") %>% 
+  output$mesaj_data_ctg <- renderText({ req(frc)
+    paste0( "Data maxima a recuperarilor FRC este de ", max( vals_coef_plati$baza_frc$`Data incasarii`, na.rm=T)) })
+  
+  observeEvent(input$show_ctg_upload, {
+    showModal(   modalDialog(  title = "Actualizeaza recuperarile FRC. Atentie, fisierul uploadat il salvez ca atare, nu
+                        verific daca sunt mai multe date decat ce am stocat.",
+        size = "l", footer = modalButton("Close",   icon = icon("xmark")),
+        fluidRow(
+          column(   width = 4,
+            fileInput(  inputId = ns("input_frc"),  label = "Upload FRC file",
+              accept = ".xlsx",  buttonLabel = "Excel only",  placeholder = "No file uploaded"),
+            textOutput(ns("mesaj_upload_frc")) ),
+          column(  width = 8,     br(),
+            div(style = "padding-left: 70px; padding-top: 5px;",
+                   shinyWidgets::downloadBttn( ns("link_frc"),   size = "md", style = "stretch",  color = "success",
+                    label = "Downloadeaza modelul de fisier FRC")) )
+        )   )   )
+    
+    output$link_frc <- downloadHandler(  filename = function() { "incasari_frc.xlsx" },
+        content = function(file) {  file.copy(from = "R/reactivedata/plati/incasari_frc.xlsx", to = file) }   )
+  })
+  
+  observeEvent(input$input_frc,{
+    shiny::validate(shiny::need(expr = tools::file_ext(input$input_frc$datapath) == "xlsx",
+        message = "Please upload only XLSX files"))
+    
+    vals_coef_plati$frc_read <- readxl::read_excel("R/reactivedata/plati/incasari_frc.xlsx",sheet = "Sheet1",
+                       col_types = c("text","date","numeric","numeric")) %>% 
+      dplyr::mutate(dplyr::across(.cols = dplyr::starts_with('Data'), ~as.Date(.x)))
+    
+    if (janitor::compare_df_cols_same( vals_coef_plati$frc_read, vals_coef_plati$baza_frc)) {
+      vals_coef_plati$baza_frc <- vals_coef_plati$frc_read
+      shinyFeedback::showToast(type = "success",title = "SUCCES",message = "Saved to database",
+              .options = list("timeOut"=1500, 'positionClass'="toast-bottom-right", "progressBar" = TRUE))
+      removeModal(session)    }
+    
+    else {  shinyFeedback::showToast(type = "error",title = "ERROR",message = "NU am putut salva. Check with your administrator",
+                            keepVisible = TRUE )    }
+    
+    })
+  
+  
+  baza_selectata_frc <- reactive({ dplyr::left_join(baza_selectata(),y = vals_coef_plati$baza_frc[,-1],
+      by=c("DocumentId"="Contract Id")) %>% 
       tidyr::replace_na(list(`Suma incasata FRC (RON)`=0)) })
   
   sumar_recuperari_ctg <- reactive({  req(input$data_raport_plati %in% plati_reactive$view_sumar_plati$data_raport) 
@@ -145,10 +199,12 @@ mod_coeficienti_plati_server <- function(input, output, session, plati_reactive)
       dplyr::mutate(Grad_anual_recuperare=Suma_incasata_FRC/sum(baza_selectata()$Expunere_CTG_plati)) %>% 
       dplyr::mutate(Grad_cumulat_recuperare=cumsum(Grad_anual_recuperare))  })
   
-  caption_recuperari_frc <- reactive({paste("Valoarea expunerii CTG din plati","la data de ",as.character(input$data_raport_plati),
-                                            " in valoare de ", formatC(sum(baza_selectata()$Expunere_CTG_plati,na.rm = T), format="f",digits = 0,big.mark = ","),
-                                            " a fost recuperata dupa cum se prezinta in tabelul de mai jos. Ultima data de actualizare a incasarilor FRC este  ",
-                                            as.character(max(frc$`Data incasarii`,na.rm = TRUE))) })
+  caption_recuperari_frc <- reactive({    paste( "Valoarea expunerii CTG din plati",  "la data de ",
+        as.character(input$data_raport_plati),  " in valoare de ",formatC(format = "f", 
+          sum(baza_selectata()$Expunere_CTG_plati, na.rm = T),  digits = 0, big.mark = ","  ),
+        " a fost recuperata dupa cum se prezinta in tabelul de mai jos. Ultima data de actualizare a incasarilor FRC este  ",
+        as.character(max(frc$`Data incasarii`, na.rm = TRUE)) )     })
+  
   output$sumar_recuperari_ctg <- DT::renderDataTable({ 
     shiny::validate( shiny::need(input$data_raport_plati %in% plati_reactive$view_sumar_plati$data_raport,
                 message = "Nu detin plati nete la data selectata. Data selectata trebuie sa fie de obicei final de luna. Uita-te in baza de date a platilor pentru a vedea toate datele rapoartelor de plati pe care le am.") )
