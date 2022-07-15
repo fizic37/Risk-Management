@@ -48,7 +48,7 @@ mod_provizioane_plati_ui <- function(id){
                  tags$script(paste0("plati_module_js('", ns(''), "')"))),
     
     bs4Dash::box(title = "Coeficienti provizioane plati",width = 12, icon = icon("subscript"),
-                collapsed=TRUE,collapsible=TRUE, maximizable=TRUE, status="info", id = ns("box_coeficienti_plati"),
+                collapsed = TRUE, collapsible = TRUE, maximizable = TRUE, status="info", id = ns("box_coeficienti_plati"),
                 mod_coeficienti_plati_ui("coeficienti_plati_ui_1") )
     
   )
