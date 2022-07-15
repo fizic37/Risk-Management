@@ -263,8 +263,9 @@ mod_crc_server <- function(input, output, session, vals){
     
     
     output$dobanzi_crc <- DT::renderDataTable({req(sumar_crc_upload,vals_crc$check_type_crc)
-      dt_generate_function(df=ratele_dobanzii_valabile,perc_col = 2:5,digits_perc = 2, round_col = NULL,
-                           caption = "Voi folosi ratele dobanzii de mai jos pentru a calcula ratele datorate aferente fisierului uploadat:")     })
+      dt_generate_function(df=ratele_dobanzii_valabile,perc_col = 2:ncol(ratele_dobanzii_valabile),
+                           digits_perc = 2, round_col = NULL,
+          caption = "Voi folosi ratele dobanzii de mai jos pentru a calcula ratele datorate aferente fisierului uploadat:")     })
     
     output$down_crc_output <- renderUI({req(vals_crc$check_type_crc)
       shinyWidgets::downloadBttn(outputId = ns("down_crc_input"),label = "Download CRC uploadat",

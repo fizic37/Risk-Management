@@ -28,14 +28,14 @@ mod_sidebar_server <- function(id, vals){
       bs4Dash::menuItem( tabName = "home",   text = "Home",icon = icon("home"),selected = FALSE  ),
       
       bs4Dash::menuItem(tabName = "plati", text = "Provizioane plati", 
-                               icon = icon("euro-sign"),  selected = FALSE),
+                               icon = icon("euro-sign"),  selected = TRUE),
       
       bs4Dash::menuItem(tabName = "solduri",text = "Solduri de garantii",
                         icon = icon("book"),selected = FALSE),
       
-      bs4Dash::menuItem(tabName = "crc",text = "CRC si CIP", icon = icon("copyright"), selected = F),
+      bs4Dash::menuItem(tabName = "crc",text = "CRC si CIP", icon = icon("copyright"), selected = FALSE),
       
-      bs4Dash::menuItem(tabName = "ifrs",text = "IFRS9", icon = icon("italic"), selected = TRUE),
+      bs4Dash::menuItem(tabName = "ifrs",text = "IFRS9", icon = icon("italic"), selected = FALSE),
       
       bs4Dash::menuItem(tabName = "admin",text = "Admin", icon = icon("lock-open"), selected = FALSE)
       

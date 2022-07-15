@@ -130,7 +130,7 @@ mod_database_util_files_server <- function(input, output, session){
       
       saveRDS(object = vals$bi_sinteza,file = "R/reactivedata/bi_sinteza.rds",version = 3,compress = "gzip")
       saveRDS(object = bi_cereri_plata (),file = "R/reactivedata/bi_cereri_plata.rds",version = 3,compress = "gzip")
-      file.copy(from = input$bi_input$datapath,to = "R/reactivedata/plati/BI_calibrari.xlsx")
+      file.copy(from = input$bi_input$datapath,to = "R/reactivedata/plati/BI_calibrari.xlsx", overwrite = TRUE)
       }
     
     if (dplyr::pull(bi_sinteza,2) >= snapshot_instiintari() & dplyr::pull(bi_sinteza,4) > nrow(bi_instiintari()) )  {
@@ -149,7 +149,7 @@ mod_database_util_files_server <- function(input, output, session){
       "Am salvat cu succes instiintarile de neplata. In tabelul de sinteza poti verifica valorile actualizate."))
       saveRDS(object = vals$bi_sinteza,file = "R/reactivedata/bi_sinteza.rds",version = 3,compress = "gzip")
       saveRDS(object = bi_instiintari (),file = "R/reactivedata/bi_instiintari.rds",version = 3,compress = "gzip")
-      file.copy(from = input$bi_input$datapath,to = "R/reactivedata/plati/BI_calibrari.xlsx")
+      file.copy(from = input$bi_input$datapath,to = "R/reactivedata/plati/BI_calibrari.xlsx", overwrite = TRUE)
       
     }
     
@@ -215,7 +215,7 @@ mod_database_util_files_server <- function(input, output, session){
     
     if (nrow(vals$bi_cui) >= nrow(bi_cui_existent)) {
       saveRDS(object = vals$bi_cui,file = "R/reactivedata/bi_cui.rds")
-      file.copy(from = input$bi_cui$datapath, "R/reactivedata/plati/bi_cui.xlsx")
+      file.copy(from = input$bi_cui$datapath, "R/reactivedata/plati/bi_cui.xlsx",overwrite = TRUE)
       vals$bi_sinteza$Nr_CUI_uri <- nrow(vals$bi_cui)
       saveRDS(object = vals$bi_sinteza,file = "R/reactivedata/bi_sinteza.rds")
       output$mesaj_bi_cui <- renderUI( div(style = "display:inline-block;margin-left: 20%;padding-top: 5px; color: #20c997;"
