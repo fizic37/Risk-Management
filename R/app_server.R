@@ -82,8 +82,15 @@ app_server <- function( input, output, session ) {
       
       mod_coeficienti_portofoliu_server("coeficienti_portofoliu_ui_1", vals_portofoliu)
       
-      #vals$box_selected <- c(vals$box_selected, "box_coeficienti_portofoliu")
-      }
+      vals$box_selected <- c(vals$box_selected, "box_coeficienti_portofoliu")
+    }
+    
+    if ( sum("box_regulariz_portofoliu" == vals$box_selected)==1 ) { 
+      
+      mod_regularizare_portofoliu_server("regularizare_portofoliu_1", vals_portofoliu)
+      
+      vals$box_selected <- c(vals$box_selected, "box_regulariz_portofoliu")
+    }
     
     if ( sum("box_cip" == vals$box_selected)==1 ) { 
       
