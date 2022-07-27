@@ -38,9 +38,9 @@ mod_coeficienti_portofoliu_server <- function(id, vals_portofoliu){
     
     ns <- session$ns
     
-    baza_citita <- readRDS(file = "R/reactivedata/portofoliu/portof_database.rds")
+    baza_citita <- readRDS(file = "R/external_volumes/portofoliu/portof_database.rds")
     
-    cereri_plata <- readRDS(file = "R/reactivedata/plati/external_volume/cereri_plata.rds") %>% 
+    cereri_plata <- readRDS(file = "R/external_volumes/cereri_plata/cereri_plata.rds") %>% 
                         dplyr::mutate(an_cerere_plata = lubridate::year(Data_cerere_plata))
     
     vals_portof_coef <- reactiveValues( cereri_plata = cereri_plata )
@@ -53,10 +53,8 @@ mod_coeficienti_portofoliu_server <- function(id, vals_portofoliu){
     
     observeEvent( vals_portof_coef$cereri_plata,{
       shinyWidgets::updateAirDateInput(session = session,inputId = "data_cerere_plata",
-                                       value = as.Date("2022-01-14")
-                                       #max(vals_portof_coef$cereri_plata$Data_cerere_plata)
-      )
-    }, once = TRUE)
+                                max(vals_portof_coef$cereri_plata$Data_cerere_plata, na.rm = TRUE)
+      )   }, once = TRUE)
     
     to_listen <- reactive({ list(input$data_cerere_plata, input$select_year_portof) })
     
@@ -73,8 +71,8 @@ mod_coeficienti_portofoliu_server <- function(id, vals_portofoliu){
       output$down_cereri_plata <- downloadHandler( filename = function() { 
         paste0( "cereri_plata_", input$data_cerere_plata,".csv" ) },
         content = function(file) { readr::write_csv(x =  cereri_plata %>% 
-                                                      dplyr::filter(Data_cerere_plata > input$select_year_portof & Data_cerere_plata <= input$data_cerere_plata) %>%
-                                                      dplyr::select(-an_cerere_plata),file = file )   } )
+        dplyr::filter(Data_cerere_plata > input$select_year_portof & Data_cerere_plata <= input$data_cerere_plata) %>%
+        dplyr::select(-an_cerere_plata),file = file )   } )
       
       vals_portof_coef$cereri_plata_splitata <- split(
         vals_portof_coef$cereri_plata_filtrata,

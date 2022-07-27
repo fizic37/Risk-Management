@@ -40,7 +40,7 @@ mod_regularizare_portofoliu_server <- function(id, vals_portofoliu){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    portofoliu_database <- readRDS("R/reactivedata/portofoliu/portof_database.rds")
+    portofoliu_database <- readRDS("R/external_volumes/portofoliu/portof_database.rds")
     
     
     ## Observer to update migration dates
@@ -194,7 +194,7 @@ mod_regularizare_portofoliu_server <- function(id, vals_portofoliu){
         
         # I produce my final regularisation provisions
         vals_portofoliu$regularizare_provizioane_non_ifrs <- dplyr::bind_rows(vals_portofoliu$tabel_beneficiari_iesiti,
-                                                                              vals_portofoliu$tabel_variatie_provizioane)
+                                  vals_portofoliu$tabel_variatie_provizioane)
         
         
         output$show_down_button <- renderUI({ req( vals_portofoliu$regularizare_provizioane_non_ifrs )

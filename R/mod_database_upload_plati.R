@@ -122,7 +122,7 @@ mod_database_upload_plati_server <- function(input, output, session, plati_react
                                                                   input$data_plati_input)+1],
               plati_reactive$view_sumar_plati$data_raport[1])
       
-      vals_upload_plati$previous_report <- readRDS("R/reactivedata/plati/baza_provizioane_plati.rds") %>% 
+      vals_upload_plati$previous_report <- readRDS("R/external_volumes/baza_provizioane_plati/baza_provizioane_plati.rds") %>% 
         dplyr::filter(data_raport == vals_upload_plati$previous_date)
        
       readr::write_csv(x = vals_upload_plati$file_read_prel %>% 
@@ -171,7 +171,7 @@ mod_database_upload_plati_server <- function(input, output, session, plati_react
             text = "Nu pot salva fisiere anterioare datei de 01 Ianuarie 2019"   )  }
     else {
       
-      baza_provizioane_plati <- readRDS("R/reactivedata/plati/baza_provizioane_plati.rds")
+      baza_provizioane_plati <- readRDS("R/external_volumes/baza_provizioane_plati/baza_provizioane_plati.rds")
       # I use below reactive as input for module compare_df
       database_vals_upload_plati <- reactiveValues(df_old = baza_provizioane_plati, df_new = vals_upload_plati$file_read_prel,
                element_id = input$data_plati_input, column_id = "data_raport", finalise_process_compare_df = FALSE)

@@ -39,12 +39,12 @@ mod_database_portofoliu_ui <- function(id){
                        uiOutput(ns("database_portof_output")) ),
                        
     bs4Dash::box(title = "Regularizare provizioane garantii depreciate",status = "info", collapsible = TRUE,collapsed = TRUE,
-                 maximizable = T, width = 12, icon = icon("angles-right"),id = ns("box_regulariz_portofoliu"),
+                 maximizable = T, width = 12, icon = icon("check-double"),id = ns("box_regulariz_portofoliu"),
     mod_regularizare_portofoliu_ui("regularizare_portofoliu_1") ),
       
    bs4Dash::box(title = "Indicatori provizioane non IFRS",id = ns("box_coeficienti_portofoliu"),
                         status = "info", collapsible = TRUE,collapsed = TRUE, maximizable = T,
-                width = 12, icon = icon("check-double"),   mod_coeficienti_portofoliu_ui("coeficienti_portofoliu_ui_1") )
+                width = 12, icon = icon("subscript"),   mod_coeficienti_portofoliu_ui("coeficienti_portofoliu_ui_1") )
   )
   
   
@@ -56,7 +56,7 @@ mod_database_portofoliu_ui <- function(id){
 mod_database_portofoliu_server <- function(input, output, session,vals,vals_portofoliu) {
   ns <- session$ns
   
-  portofoliu_database <- readRDS("R/reactivedata/portofoliu/portof_database.rds")
+  portofoliu_database <- readRDS("R/external_volumes/portofoliu/portof_database.rds")
   
   observeEvent(input$box_utility, {req(any(input$box_utility$collapsed==FALSE,
                                                 input$box_utility$maximized==TRUE))
@@ -173,7 +173,7 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
     
     portof_database <- isolate(vals_portofoliu$portof_database)
     
-    saveRDS(object = portof_database,file = "R/reactivedata/portofoliu/portof_database.rds")
+    saveRDS(object = portof_database,file = "R/external_volumes/portofoliu/portof_database.rds")
     
     
     

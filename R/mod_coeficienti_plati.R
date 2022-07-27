@@ -74,7 +74,7 @@ mod_coeficienti_plati_server <- function(input, output, session, plati_reactive)
     # Procesare simulare coeficienti
   
     if ( is.null(plati_reactive$baza_provizioane_plati) ) {
-      baza_provizioane_plati <- readRDS("R/reactivedata/plati/baza_provizioane_plati.rds") %>%
+      baza_provizioane_plati <- readRDS("R/external_volumes/baza_provizioane_plati/baza_provizioane_plati.rds") %>%
         dplyr::select(DocumentId,NrCTR,Banca,Beneficiar,CUI,PlatiEfective,TotalRecuperat,
                       RecuperatFond,RecuperatCTG,ValoareAdmisaFNG,ProvizionNou,Plata_neta,Expunere_CTG_plati,data_raport) } else {
       baza_provizioane_plati <- isolate(plati_reactive$baza_provizioane_plati) %>%

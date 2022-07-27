@@ -83,7 +83,7 @@ mod_provizioane_plati_server <- function(input, output, session,vals, plati_reac
       
       baza_provizioane_plati <- isolate(plati_reactive$baza_provizioane_plati)
       
-      saveRDS(object = baza_provizioane_plati,file = "R/reactivedata/plati/baza_provizioane_plati.rds")
+      saveRDS(object = baza_provizioane_plati,file = "R/external_volumes/baza_provizioane_plati/baza_provizioane_plati.rds")
       
     
     shinyFeedback::showToast(type = "success",title = "SUCCES",message = "Saved to database",
@@ -149,7 +149,7 @@ mod_provizioane_plati_server <- function(input, output, session,vals, plati_reac
   # observer which saves baza provizioane plati because plati_recative$baza_provizioane has changed
   observeEvent(input$confirm_delete,{
     
-    plati_reactive$baza_provizioane_plati <- readRDS("R/reactivedata/plati/baza_provizioane_plati.rds") %>% 
+    plati_reactive$baza_provizioane_plati <- readRDS("R/external_volumes/baza_provizioane_plati/baza_provizioane_plati.rds") %>% 
       dplyr::filter(data_raport != as.Date.character(input$data_raport_to_delete))
     removeModal(session = session)
   })
@@ -169,7 +169,7 @@ mod_provizioane_plati_server <- function(input, output, session,vals, plati_reac
     output$confirm_download <- downloadHandler(filename = function() {
       paste0("provizioane_plati_",  input$data_raport_to_download, ".csv")   },
       content = function(file) {
-        readr::write_csv(x = readRDS("R/reactivedata/plati/baza_provizioane_plati.rds") %>%
+        readr::write_csv(x = readRDS("R/external_volumes/baza_provizioane_plati/baza_provizioane_plati.rds") %>%
                            dplyr::filter(data_raport ==  as.Date.character(input$data_raport_to_download)),
                          path = file)
         removeModal(session = session)  }   )

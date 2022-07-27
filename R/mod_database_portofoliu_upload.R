@@ -319,7 +319,7 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
           
           observeEvent(input$save_portofoliu,{
             
-              portof_database <- readRDS('R/reactivedata/portofoliu/portof_database.rds')
+              portof_database <- readRDS('R/external_volumes/portofoliu/portof_database.rds')
 
               
               removeUI("#database_portofoliu_upload_ui_1-save_portofoliu")
