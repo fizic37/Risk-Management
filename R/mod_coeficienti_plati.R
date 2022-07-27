@@ -162,7 +162,7 @@ mod_coeficienti_plati_server <- function(input, output, session, plati_reactive)
       round(recuperari_creante()$Grad_recuperare_cumulat[nrow(recuperari_creante())], 4) * 100,  "%")  })
   
   output$recuperari_creante <- DT::renderDataTable( { dt_generate_function(df = recuperari_creante(),
-          round_col = 2,perc_col = 3,caption = caption_recuperari_creante(),dom="tp",pageLength=5)  } )
+          round_col = 2,perc_col = 3,caption = caption_recuperari_creante(),dom="tp",pageLength=5, show_buttons=TRUE)  } )
   
   recuperari_ctg <- reactive({ req( baza_plati_nete(), recuperari_FRC_data_selectata(),expunere_CTG_data_selectata() )
     baza_plati_nete() %>% 
@@ -185,7 +185,7 @@ mod_coeficienti_plati_server <- function(input, output, session, plati_reactive)
  
   
   output$recuperari_ctg <- DT::renderDataTable( { dt_generate_function(df = recuperari_ctg(),
-      round_col = 2,perc_col = 3,caption = caption_recuperari_FRC(),dom="tp",pageLength=5)  } )
+      round_col = 2,perc_col = 3,caption = caption_recuperari_FRC(),dom="tp",pageLength=5, show_buttons=TRUE)  } )
   
   recuperari_accesorii <- reactive({ baza_plati_nete() %>% 
       dplyr::select(dplyr::matches("ValoareAdmisaFNG|RecuperatFond")) %>%
@@ -205,7 +205,7 @@ mod_coeficienti_plati_server <- function(input, output, session, plati_reactive)
         round(recuperari_accesorii()$Grad_recuperare_cumulat[nrow(recuperari_accesorii())], 4) * 100,  "%")  })
                 
   output$recuperari_accesorii <-  DT::renderDataTable( { dt_generate_function(df = recuperari_accesorii(),
-          round_col = 2,perc_col = 3,caption = caption_recuperari_accesorii(),dom="tp",pageLength=5)  } )
+          round_col = 2,perc_col = 3,caption = caption_recuperari_accesorii(),dom="tp",pageLength=5, show_buttons=TRUE)  } )
   
   output$down_sumar_creante <- downloadHandler(filename = function(){"creante_recuperate.csv"},content = function(file){
     readr::write_csv(x = baza_plati_nete(),file = file) } )
