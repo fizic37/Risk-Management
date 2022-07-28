@@ -1,6 +1,7 @@
 .Rhistory
 .Rproj.user/
 R/reactivedata/
+R/external_volumes/
 *.docx
 *.xlsx
 *.csv
