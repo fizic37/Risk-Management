@@ -42,14 +42,17 @@ app_server <- function( input, output, session ) {
       vals$sidebar_selected <- c(vals$sidebar_selected,"crc")   }
     
     if (sum("ifrs" == vals$sidebar_selected)==1) {
-      callModule(mod_ifrs_portofoliu_server, "ifrs_portofoliu_ui_1", vals_portofoliu, parrent_session=session)
+      vals_portofoliu$ifrs_database <- readRDS("R/external_volumes/ifrs9/ifrs_database.rds")
+      vals_portofoliu$ifrs_dates <- sort(vals_portofoliu$ifrs_database$data_raport %>% unique(),decreasing = TRUE)
+      mod_ifrs_database_server("ifrs_database_1", database_ifrs = vals_portofoliu$ifrs_database)
       mod_ifrs_calculate_server("ifrs_calculate_ui_1", vals_portofoliu, parrent_session=session)
-      #mod_updated_new_ifrs_server("updated_new_ifrs_ui_1",vals_portofoliu, parrent_session=session)
-      mod_updated_new_database_ifrs_server("updated_new_database_ifrs_ui_1")
+      mod_ifrs_migration_server("ifrs_migration_ui_1", database_ifrs = vals_portofoliu$ifrs_database,
+                                ifrs_dates = vals_portofoliu$ifrs_dates )
+      
       vals$sidebar_selected <- c(vals$sidebar_selected,"ifrs")   }
     
     if (sum("admin" == vals$sidebar_selected)==1) {
-      mod_admin_server("admin_ui_1")
+      mod_admin_server("admin_ui_1", vals)
       vals$sidebar_selected <- c(vals$sidebar_selected,"admin")   }
     
   })
@@ -97,6 +100,18 @@ app_server <- function( input, output, session ) {
       callModule(mod_cip_server, "cip_ui_1")
       
       vals$box_selected <- c(vals$box_selected, "box_cip") }
+    
+    if ( sum("box_admin_coef" == vals$box_selected)==1 ) { 
+      
+      mod_admin_coef_server("admin_coef_1")
+      
+      vals$box_selected <- c(vals$box_selected, "box_admin_coef") }
+    
+    if ( sum("box_admin_scenarii" == vals$box_selected)==1 ) { 
+      
+      mod_admin_scenarii_server("admin_scenarii_1")
+      
+      vals$box_selected <- c(vals$box_selected, "box_admin_scenarii") }
     
     
     

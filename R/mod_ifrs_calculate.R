@@ -57,7 +57,7 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
     vals_ifrs <- reactiveValues()
     
     coeficienti_depreciate <- reactive({ req(vals_ifrs$data_raport)
-      readRDS( 'R/reactivedata/ifrs/coeficienti_folositi.rds' ) %>% 
+      readRDS( 'R/reactivedata/ifrs/istoric_coef_provizionare.rds' ) %>% 
         dplyr::filter( FromDate <= vals_ifrs$data_raport, ToDate>= vals_ifrs$data_raport)
     })
     
@@ -67,13 +67,15 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
                                        value = max(vals_portofoliu$view1_portofoliu$anul_de_raportare) +1 )
     })
     
+    
     observeEvent(input$data_raport,{
       vals_ifrs$data_raport <- input$data_raport %>% lubridate::ceiling_date(unit = "months")-1
     })
     
+    
     output$show_calculate <- renderUI({ tagList( br(),
-                                                 shinyWidgets::actionBttn(inputId = ns("calculate"),label = "Calculeaza provizioanele IFRS9",
-                                                                          style = "stretch",color = "success",icon = icon("calculator") ) )    })
+            shinyWidgets::actionBttn(inputId = ns("calculate"),label = "Calculeaza provizioanele IFRS9",
+              style = "stretch",color = "success",icon = icon("calculator") ) )    })
     
     observeEvent(input$calculate,{ req( vals_ifrs$data_raport, vals_portofoliu$view1_portofoliu)
       
@@ -118,13 +120,13 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
         scenarios <-  reactive({req(vals_ifrs$data_raport)
           
           readRDS( "R/reactivedata/ifrs/scenarios.rds") %>% dplyr::filter(From_Date <= vals_ifrs$data_raport,
-                                                                          To_Date >= vals_ifrs$data_raport ) %>% dplyr::arrange(desc(Probability)) %>% dplyr::select(1:4) })
+                To_Date >= vals_ifrs$data_raport ) %>% dplyr::arrange(desc(Probability)) %>% dplyr::select(1:4) })
         
         output$show_calculate <- renderUI({DT::dataTableOutput(ns("scenarios_table")) })
         
-        output$scenarios_table <- DT::renderDataTable(dt_generate_function(df = scenarios(),perc_col=1:3, digits_perc=2,
-                                                                           caption= "Scenariile de evolutie macroeconomica. Dublu-click pentru a modifica.",
-                                                                           editable="cell", show_buttons=TRUE))
+        output$scenarios_table <- DT::renderDataTable( dt_generate_function(df = scenarios(),perc_col=1:3, digits_perc=2,
+                    caption= "Scenariile de evolutie macroeconomica. Dublu-click pentru a modifica.",
+                             editable="cell", show_buttons=TRUE))
         
         scenarios_reactive <<- reactive({
           if (is.null(input[['scenarios_table_cell_edit']])) {
@@ -162,7 +164,8 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
         
         coeficienti_depreciate_reactivi <<- reactive({
           if (is.null(input[['coeficienti_depreciate_cell_edit']])) {
-            coeficienti_depreciate() %>% dplyr::select(1:5)
+            coeficienti_depreciate() %>% dplyr::select(1:5)  #%>% t() %>% as.data.frame() %>% 
+              #dplyr::rename_at(.vars = 1, .funs = ~"Indicatori")
           } else {
             DT::editData(coeficienti_depreciate() %>% dplyr::select(1:5) %>% t() %>% as.data.frame() %>% 
                            dplyr::rename_at(.vars = 1, .funs = ~"Indicatori"), rownames = TRUE,
@@ -172,7 +175,7 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
         
         
         
-        portofoliu <<- reactive ({ req(coeficienti_depreciate_reactivi(), scenarios_reactive())
+        portofoliu <<- reactive ({ req( coeficienti_depreciate_reactivi(), scenarios_reactive() )
           baza_cui <- readRDS("R/reactivedata/bi_cui.rds")
           
           crc <- readRDS("R/reactivedata/crc/baza_date_crc.rds") %>% 
@@ -202,7 +205,7 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
             dplyr::left_join(y = baza_cui, by = c("CUI" = "Unique ID"))
           
           
-          portofoliu <- readRDS("R/reactivedata/portofoliu/portof_database.rds") %>%
+          portofoliu <- readRDS("R/external_volumes/portofoliu/portof_database.rds") %>%
             dplyr::filter(anul_de_raportare == vals_ifrs$data_raport ) %>%
             dplyr::group_by(`Cod Partener`,Beneficiar, categorie_contaminata) %>%
             dplyr::summarise(expunere_mil_lei = sum(expunere)/1000000, contragarantii = sum(contragarantii)) %>% dplyr::ungroup() %>%
@@ -279,12 +282,8 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
                   11.6 * Robor_3M_prob_minimum() - 22.1 *growth_prob_minimum()))))
             )
           
-          
-          portofoliu <-
-            portofoliu %>% dplyr::mutate(
-              Provizion_prob_max = ifelse(
-                stage_prob_max == "stage1",
-                prob_1Y_prob_max *
+          portofoliu <-     portofoliu %>% dplyr::mutate(   Provizion_prob_max = ifelse(
+                stage_prob_max == "stage1", prob_1Y_prob_max *
                   (
                     expunere_mil_lei * 1000000 - coeficienti_depreciate_reactivi()$Ajustare_ctg *
                       contragarantii
@@ -372,7 +371,6 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
                 Provizion_prob_minimum
             )
           
-          
           return(portofoliu)
         })
         
@@ -398,18 +396,18 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
                                 round_col = 2:3, show_buttons = TRUE )  })
         
         output$show_save <- renderUI( shinyWidgets::actionBttn(ns("save"), icon = icon("save"),
-                                                               style = "stretch",color = "success",label = "Salveaza provizioanele calculate"))
+                              style = "stretch",color = "success",label = "Salveaza provizioanele calculate"))
         
         output$show_main_scenario <- renderUI( shinyWidgets::downloadBttn(ns("down_main_scenario"),
-                                                                          style = "stretch",color = "success",label = "Download main scenario data"))
+                        style = "stretch",color = "success",label = "Download main scenario data"))
         
         output$down_main_scenario <- downloadHandler(filename = function() {"expected_scenario.csv"},
-                                                     content = function(file) { req(portofoliu())
-                                                       readr::write_csv(file = file, x = portofoliu() %>% dplyr::select(-Provizion_prob_minimum, -Provizion_prob_mean,
-                                                                                                                        -prob_3Y_prob_mean, -prob_3Y_prob_minimum)) })
+                         content = function(file) { req(portofoliu())
+                        readr::write_csv(file = file, x = portofoliu() %>% dplyr::select(-Provizion_prob_minimum, -Provizion_prob_mean,
+                             -prob_3Y_prob_mean, -prob_3Y_prob_minimum)) })
         
         output$show_mean_scenario <- renderUI( shinyWidgets::downloadBttn(ns("down_mean_scenario"),
-                                                                          style = "stretch",color = "success",label = "Download median scenario data"))
+                    style = "stretch",color = "success",label = "Download median scenario data"))
         
         
         output$down_mean_scenario <-  downloadHandler( filename = function() {"mean_scenario.csv"},
@@ -426,10 +424,10 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
                                                                                dplyr::select(-Provizion_prob_mean,-Provizion_prob_max, -prob_3Y_prob_max, -prob_3Y_prob_mean)  )  } )
         
         output$final_provizioane <- DT::renderDataTable({ req(portofoliu())
+          
           portofoliu() %>% dplyr::group_by(stage_prob_max) %>% dplyr::summarise(Provizion_prob_max =
-                                                                                  sum(Provizion_prob_max)) %>% dplyr::left_join(  portofoliu() %>% dplyr::group_by(stage_prob_mean) %>% 
-                                                                                                                                    dplyr::summarise(Provizion_prob_mean = sum(Provizion_prob_mean)),
-                                                                                                                                  by = c("stage_prob_max" = "stage_prob_mean")) %>%
+            sum(Provizion_prob_max)) %>% dplyr::left_join(  portofoliu() %>% dplyr::group_by(stage_prob_mean) %>% 
+                  dplyr::summarise(Provizion_prob_mean = sum(Provizion_prob_mean)), by = c("stage_prob_max" = "stage_prob_mean")) %>%
             dplyr::left_join( portofoliu() %>% dplyr::group_by(stage_prob_minimum) %>% 
                                 dplyr::summarise(Provizion_prob_minimum = sum(Provizion_prob_minimum)), 
                               by = c("stage_prob_max" = "stage_prob_minimum") ) %>% 
@@ -447,14 +445,13 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
     observeEvent(input$save,{ req(portofoliu())
       
       shinyWidgets::ask_confirmation(inputId = ns("confirm_save"),title = "Confirm",
-                                     text = "Esti sigur ca vrei sa salvezi provizioanele calculate?",
-                                     btn_labels = c("NU, renunta","OK, salveaza"),btn_colors = c("#c92052","#20c997"),type = "info")
-      
-    })
+            text = "Esti sigur ca vrei sa salvezi provizioanele calculate?",
+             btn_labels = c("NU, renunta","OK, salveaza"),btn_colors = c("#c92052","#20c997"),type = "info")
+      })
     
     observeEvent(input$confirm_save,{req(input$confirm_save == TRUE)
       
-      database_ifrs <- readRDS("R/reactivedata/ifrs/new_database_ifrs.rds")
+      database_ifrs <- readRDS("R/external_volumes/ifrs9/ifrs_database.rds")
       
       
       vals_ifrs$df_new <- portofoliu() %>% dplyr::mutate(data_raport = vals_ifrs$data_raport)
@@ -470,10 +467,11 @@ mod_ifrs_calculate_server <- function(id, vals_portofoliu, parrent_session){
     
     observeEvent(vals_ifrs$finalise_process_compare_df,{ req(vals_ifrs$finalise_process_compare_df == TRUE )
       
-      saveRDS(object = vals_ifrs$df_new_prel, file = "R/reactivedata/ifrs/update_new_database_ifrs.rds")
-      
+     
+      saveRDS(object = vals_ifrs$df_new_prel, file = "R/external_volumes/ifrs9/ifrs_database.rds")
       
       saveRDS(object = coeficienti_depreciate() %>% dplyr::mutate(data_raport = vals_ifrs$data_raport) %>%
+                dplyr::select(-dplyr::contains("Date")) %>%
                 dplyr::bind_rows( readRDS("R/reactivedata/ifrs/coeficienti_folositi.rds") %>%
                                     dplyr::filter(data_raport != vals_ifrs$data_raport )),
               file = "R/reactivedata/ifrs/coeficienti_folositi.rds")
