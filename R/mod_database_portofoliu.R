@@ -121,7 +121,7 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
       )  })
     
     output$sinteza_portofoliu <- DT::renderDataTable({
-        dt_generate_function(show_buttons = TRUE,pageLength = 5,
+        dt_generate_function(show_buttons = TRUE,pageLength = 4,
           df = cbind(  tibble::tibble(" " = vals_portofoliu$actions), vals_portofoliu$view_portofoliu),
           escape = FALSE,
           caption = vals_portofoliu$caption_table,

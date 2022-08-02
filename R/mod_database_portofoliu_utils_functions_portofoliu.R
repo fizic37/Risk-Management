@@ -12,12 +12,12 @@ max_col <- function(df){
 # Function to rename cerere_plata_cumulata according to its year
 rename_col <- function(df){
   return(dplyr::rename_at(.tbl = df,
-                          .vars = "Cerere_Plata_cumulata",~paste0("Cerere_Plata_cumulata_",unique(df$an_cerere_plata)))) }
+      .vars = "Cerere_Plata_cumulata",~paste0("Cerere_Plata_cumulata_",unique(df$an_cerere_plata)))) }
 
 # I need this function in order to rename columns according to their date of refference (anul_de_raportare): ex: expunere_2018_12_31
-rename_col_nonifrs <-  function(df){
-  return(dplyr::rename_at(.tbl = df,.vars = c("expunere","categorie_contaminata","provizion_contabil"),
-                          ~paste0(c("Expunere_","categorie_contaminata_","Provizion_contabil_"),
-                                  unique(df$anul_de_raportare)
-                          )))  
-}
+# rename_col_ifrs <-  function(df){
+#   return(dplyr::rename_at(.tbl = df,.vars = c("Expunere","stage"),
+#                           ~paste0(c("Expunere_","stage_"),
+#                                   unique(df$data_raport)
+#                           )))  
+# }
