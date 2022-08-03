@@ -24,11 +24,13 @@ mod_regularizare_portofoliu_ui <- function(id){
                  column(width = 4, shinyWidgets::downloadBttn(outputId =ns("down_iesiri_deprec"),label = 
                                   "Download iesiri depreciate", style = "stretch",color = "success" ) ),
                  column(width = 4 , shinyWidgets::actionBttn(inputId = ns("start_migration"),
-                         label = "Genereaza matricea de migratie a portofoliului",
+                         label = "Genereaza matricea de migratie",
                           icon = icon("play"),style = "stretch",color = "danger")),
                 
-                DT::dataTableOutput(ns("portfolio_migration")), br(),
-                uiOutput(outputId = ns("show_down_button"))
+                 column(width = 12,DT::dataTableOutput(ns("variatie_portofoliu")), br()),
+                 DT::dataTableOutput(ns("portfolio_migration")), br(),
+                 uiOutput(outputId = ns("show_down_button")),
+                
                
   )
 }
@@ -64,6 +66,26 @@ mod_regularizare_portofoliu_server <- function(id, vals_portofoliu){
     
     bi_cui_existent <- readRDS("R/reactivedata/bi_cui.rds")
     
+    portofoliu_curent <- eventReactive(input$migration_to_nonifrs, {
+      portofoliu_database %>% dplyr::filter(anul_de_raportare == input$migration_to_nonifrs)   })
+    
+    portofoliu_anterior <- eventReactive(input$migration_from_nonifrs, {
+      portofoliu_database %>% dplyr::filter(anul_de_raportare == input$migration_from_nonifrs)   })
+    
+    output$variatie_portofoliu <- DT::renderDataTable( { 
+      req( portofoliu_curent(),  portofoliu_anterior() )
+      dt_generate_function(df = portofoliu_curent() %>% dplyr::group_by(categorie_contaminata) %>% 
+            dplyr::summarise(Expunere=sum(expunere),Provizion = sum(provizion_contabil)) %>% 
+                   dplyr::rename_at(.vars = c('Expunere','Provizion'),.funs = ~paste0(c("Expunere_","Provizion_"),
+                      input$migration_to_nonifrs)) %>% dplyr::left_join( portofoliu_anterior() %>% 
+                              dplyr::group_by(categorie_contaminata) %>% 
+                                dplyr::summarise(Expunere=sum(expunere),Provizion = sum(provizion_contabil)) %>% 
+                                  dplyr::rename_at(.vars = c('Expunere','Provizion'),.funs = ~paste0(c("Expunere_","Provizion_"),
+                                        input$migration_from_nonifrs)), by = "categorie_contaminata") %>%
+              janitor::adorn_totals(where = "row"),round_col = 2:5,
+            caption = paste0("Variatie portofoliu la data de ",input$migration_to_nonifrs, " fata de ",
+                             input$migration_from_nonifrs),show_buttons=TRUE)
+      })
     
     output$down_intrari_deprec <-  downloadHandler( filename = function() { "intrari_deprec.csv"  },
                         content = function(file) { readr::write_csv(   file = file,

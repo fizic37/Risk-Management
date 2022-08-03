@@ -20,7 +20,10 @@ mod_ifrs_migration_ui <- function(id){
         value = as.Date("2022-06-30"),autoClose = TRUE,language = "ro")),
   
   column(width = 4, br(), uiOutput(outputId = ns("error_message"))),
-  DT::dataTableOutput(ns("portfolio_migration"))
+  
+  column(width = 12, DT::dataTableOutput(ns("portfolio_migration")), br() ),
+  
+  DT::dataTableOutput(ns("variatie_portofoliu"))
   
   )
   )
@@ -49,7 +52,7 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
       database_ifrs %>% dplyr::mutate(stage = stage_prob_max) %>% # I use stage_prob_max for migration
            dplyr::mutate(stage = ifelse(stage=="stage1",1,ifelse(stage=="stage2",2,3))) %>% # I process because I use below stage1 as 1
         dplyr::mutate( Expunere = 1000000*expunere_mil_lei ) %>% 
-        dplyr::select("Cod Partener",Beneficiar, contragarantii, data_raport, Expunere, stage)
+        dplyr::select("Cod Partener",Beneficiar, contragarantii, data_raport, Expunere, stage, ProvizionContabil)
       })
     
     portofoliu_perioada_curenta <- eventReactive(input$migration_to_ifrs, { req(database_ifrs_prelucrata())
@@ -68,6 +71,7 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
     })
     
     observeEvent(c( portofoliu_perioada_curenta(),portofoliu_perioada_anterioara() ),{
+     
       shiny::validate(shiny::need(expr = nrow(portofoliu_perioada_curenta()) > 0,
                                   message = paste0("Nu am baza de date IFRS la data de ", input$migration_to_ifrs)))
       
@@ -145,6 +149,16 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
           paste0("Nu exista info IFRS9 pentru data selectata")) })
   
     
+    output$variatie_portofoliu <- DT::renderDataTable({ req( database_ifrs_prelucrata() )
+      dt_generate_function(df = database_ifrs_prelucrata() %>% dplyr::filter(data_raport %in% 
+            c(input$migration_to_ifrs, input$migration_from_ifrs)) %>% dplyr::group_by(stage, data_raport) %>% 
+              dplyr::summarise(Provizion_Contabil = sum(ProvizionContabil)) %>% 
+                tidyr::pivot_wider(names_from = data_raport,values_from = Provizion_Contabil,
+                    names_prefix = "Provizion_Contabil_") %>% dplyr::ungroup() %>% 
+                      dplyr::mutate("Variatie" = .[[3]]  - .[[2]] ) %>% janitor::adorn_totals(where = "row"),
+                        round_col = 2:4, caption = paste0("Variatie portofoliu la data de ", input$migration_to_ifrs,
+                            " fata de ", input$migration_from_ifrs), show_buttons=TRUE)
+    })
     
     
   })

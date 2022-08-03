@@ -29,7 +29,9 @@ mod_provizioane_plati_ui <- function(id){
                       column( width = 6, br(), div(style="display:inline-block;margin-left: 20%;padding-top: 5px;",
                       downloadLink(outputId = ns("generate_report"),
                                    label = "Click aici pentru a downloada adresa catre contabilitate") ),
-                      tags$head(tags$style("#provizioane_plati_ui_1-generate_report {color: #c92052;}")) )
+                      tags$head(tags$style("#provizioane_plati_ui_1-generate_report {color: #c92052;}")) ),
+                      
+                      DT::dataTableOutput(ns("variatie_plati"))
                   )),
    
     bs4Dash::box(title = "Upload file provizioane plati", width = 12, icon = icon("file-excel"),
@@ -216,6 +218,25 @@ mod_provizioane_plati_server <- function(input, output, session,vals, plati_reac
                             envir = new.env(parent = globalenv()) ) 
     }) 
   })
+  
+  sumar_plati_curent <- eventReactive( input$to_plati,{ req( plati_reactive$view_sumar_plati )
+    
+  plati_reactive$view_sumar_plati %>% dplyr::select(-Grad_Acoperire_Provizioane) %>% 
+    dplyr::filter(data_raport == input$to_plati ) %>% t() %>% 
+    data.frame() %>% dplyr::slice(-1) %>%  setNames( input$to_plati ) })
+  
+  sumar_plati_anterior <- eventReactive( input$from_plati,{ req( plati_reactive$view_sumar_plati )
+    
+    plati_reactive$view_sumar_plati %>% dplyr::select(-Grad_Acoperire_Provizioane) %>% 
+      dplyr::filter(data_raport == input$from_plati ) %>% t() %>% 
+      data.frame() %>% dplyr::slice(-1) %>%  setNames( input$from_plati ) })
+  
+  output$variatie_plati <- DT::renderDataTable( { req( sumar_plati_curent(), sumar_plati_anterior())
+   
+     dt_generate_function(df = sumar_plati_curent() %>% cbind( sumar_plati_anterior() ) %>% 
+       dplyr::mutate(dplyr::across(.cols = c(1:2), ~as.numeric(.x))) %>%  
+         dplyr::mutate(Variatie = .[[1]] - .[[2]]),  round_col = 1:3,rownames = TRUE, show_buttons=TRUE,
+    caption = paste0("Variatia provizioanelor pentru plati la data de ", input$to_plati, " fata de ", input$from_plati),  )  })
   
   
 }
