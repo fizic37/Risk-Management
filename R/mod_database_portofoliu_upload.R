@@ -247,7 +247,7 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
           removeUI("#database_portofoliu_upload_ui_1-calculate_provizioane_depreciate")
           removeUI("#database_portofoliu_upload_ui_1-down_portof_depreciat_bttn")
         
-        vals_portof_upload$coef_non_ifrs <- readRDS(file = "R/reactivedata/ifrs/coef_non_ifrs.rds") %>%
+        vals_portof_upload$coef_non_ifrs <- readRDS(file = "R/reactivedata/ifrs/istoric_coef_provizionare.rds") %>%
           dplyr::filter(FromDate <= input$date_portof_input, ToDate >= input$date_portof_input) %>%
           dplyr::select(-FromDate, -ToDate) %>% dplyr::slice(1)
         
