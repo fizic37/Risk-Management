@@ -192,7 +192,7 @@ mod_provizioane_plati_server <- function(input, output, session,vals, plati_reac
         tempReport <- file.path(temporary_directory, "test_word.Rmd")
         templateReport <- file.path(temporary_directory, "template_provizioane_plati.docx")
         file.copy(from = "test_word.Rmd",to =  tempReport, overwrite = TRUE)
-        file.copy(from = "template_provizioane_plati.docx",to =  templateReport, overwrite = TRUE)
+        file.copy(from = "R/reactivedata/template_provizioane_plati.docx",to =  templateReport, overwrite = TRUE)
           params = list(luna_curenta = lubridate::month(input$to_plati,label = TRUE,abbr = FALSE),
                                                               an_curent = lubridate::year(input$to_plati),
                                                               provizion_curent = plati_reactive$view_sumar_plati$Provizioane_Constituite[

@@ -57,13 +57,13 @@ mod_admin_server <- function(id, vals){
     
     observeEvent(input$upload_doc,{ shiny::validate( shiny::need(expr = tools::file_ext(input$upload_doc$datapath) == "docx",
                                   message = "Docx only") )
-      file.copy(from = input$upload_doc$datapath, to = "template_provizioane_plati.docx",overwrite = TRUE)
+      file.copy(from = input$upload_doc$datapath, to = "R/reactivedata/template_provizioane_plati.docx",overwrite = TRUE)
       shinyFeedback::showToast(type = "success",title = "SUCCES",message = "Am salvat cu succes modelul de adresa",
       .options = list("timeOut"=1000, 'positionClass'="toast-bottom-right", "progressBar" = TRUE) )
     })
     
     output$down_doc <- downloadHandler(filename = function() {"template_provizioane_plati.docx"},
-            content = function(file) {file.copy(from = "template_provizioane_plati.docx",to = file, overwrite = TRUE ) } )
+            content = function(file) {file.copy(from = "R/reactivedata/template_provizioane_plati.docx",to = file, overwrite = TRUE ) } )
     
     
   })
