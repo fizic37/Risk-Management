@@ -55,7 +55,11 @@ mod_admin_scenarii_server <- function(id){
       scenariul_actual <<- vals_admin_scenarii$istoric_scenarii  %>%  dplyr::slice(1:3) %>% dplyr::arrange(desc(Probability))
       
       showModal( modalDialog( title = "New Scenarii",    size = "l",
-                              footer = list(modalButton("Cancel"),
+                              footer = list( h6("Se completeaza scenariile valabile dupa expirarea scenariului actual. 
+                    Atentie la data completarii datei de expirare, aceasta va fi data de expirare a scenariului actual
+                    si se va activa doar cand se modifica una din info de mai sus. 
+                    Noul scenariu va primi automat data expirarii 2100-01-01",    style = "color:#c92052;"),
+                                modalButton("Cancel"),
                                             uiOutput(ns("show_save_scenarii"))),
                               fluidRow(  column( width = 12,
                                                  h5("Scenariul de baza", style= "color: #20c997;"), hr() ),
@@ -124,7 +128,9 @@ mod_admin_scenarii_server <- function(id){
                                          column(width = 6, 
                                                 shinyWidgets::airDatepickerInput(ns("data_new_scenarii"),
                                                   label = "Data de intrare in vigoare a noilor scenarii",
-                                                  value = input$data_scenarii,language = "ro", autoClose = TRUE) ),
+                                                  value = input$data_scenarii,language = "ro", autoClose = TRUE,
+                                                  minDate = scenariul_actual$From_Date[1]+1,
+                                                  position = "top right") ),
                                          
                                          column(width = 6, uiOutput(ns("show_data_scenarii_actuale")))
                               )
@@ -158,7 +164,7 @@ mod_admin_scenarii_server <- function(id){
       
       output$show_data_scenarii_actuale <- renderUI({ req( modify_scenarii() == "yes" )
         
-        shinyWidgets::airDatepickerInput( ns("data_scenarii_actuale"),autoClose = T,
+        shinyWidgets::airDatepickerInput( ns("data_scenarii_actuale"),autoClose = T,position = "top left",
                                           label = "Data de expirare a scenariilor actuale", language = "ro",
                                           value = input$data_new_scenarii - 1  )
       })
