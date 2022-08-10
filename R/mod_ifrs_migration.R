@@ -14,7 +14,7 @@ mod_ifrs_migration_ui <- function(id){
   fluidRow( 
   column(width = 4,
          shinyWidgets::airDatepickerInput(inputId = ns("migration_from_ifrs"), label = "Migration from:",width = "300px",
-                     value = as.Date("2022-03-31"),autoClose = TRUE,language = "ro")),
+                     value = as.Date("2021-12-31"),autoClose = TRUE,language = "ro")),
   column(width = 4, 
          shinyWidgets::airDatepickerInput(inputId = ns("migration_to_ifrs"),    label = "Migration to:", 
         value = as.Date("2022-06-30"),autoClose = TRUE,language = "ro")),
@@ -39,13 +39,14 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
     
     vals_ifrs <- reactiveValues()
     
-    observeEvent(ifrs_dates,{
-    shinyWidgets::updateAirDateInput(session = session,inputId = "migration_from_ifrs",
-                                    value = ifrs_dates[2])
-    
-    shinyWidgets::updateAirDateInput(session = session,inputId = "migration_to_ifrs",
-                                     value = ifrs_dates[1])
-    })
+    # observeEvent(ifrs_dates,{
+    # 
+    #   shinyWidgets::updateAirDateInput(session = session,inputId = "migration_from_ifrs",
+    #                                 value = ifrs_dates[2]  )
+    # 
+    # shinyWidgets::updateAirDateInput(session = session,inputId = "migration_to_ifrs",
+    #                                  value = ifrs_dates[1] )
+    # })
     
     database_ifrs_prelucrata <- eventReactive(database_ifrs,{
       
@@ -62,7 +63,7 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
     })
     
     
-    portofoliu_perioada_anterioara <- eventReactive(input$migration_from_ifrs, { 
+    portofoliu_perioada_anterioara <- eventReactive( eventExpr = c(input$migration_from_ifrs,input$migration_to_ifrs), { 
       req( database_ifrs_prelucrata(), portofoliu_perioada_curenta() ) 
       database_ifrs_prelucrata() %>% dplyr::filter(data_raport == input$migration_from_ifrs) %>%
         dplyr::rename_at(.vars = c("Expunere", "stage"), ~paste0(c("Expunere_","stage_"),input$migration_from_ifrs)) %>%
@@ -87,7 +88,7 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
       vals_ifrs$tabel_brut_migration_expunere <- portofoliu_perioada_anterioara() %>% 
         dplyr::group_by(!!rlang::sym(vals_ifrs$stage_anterior),    !!rlang::sym(vals_ifrs$stage_curent)) %>% 
         dplyr::summarise("vals_ifrs$expunere_anterioara" = sum(!!rlang::sym(vals_ifrs$expunere_anterioara)),
-          'vals_ifrs$expunere_curenta'=sum(!!rlang::sym(vals_ifrs$expunere_curenta))) %>% dplyr::ungroup() %>%
+                         'vals_ifrs$expunere_curenta'=sum(!!rlang::sym(vals_ifrs$expunere_curenta))) %>% dplyr::ungroup() %>%
         dplyr::rename_at(.vars = 3:4,.funs = ~c(vals_ifrs$expunere_anterioara,vals_ifrs$expunere_curenta)) %>%
         dplyr::mutate(Derecunoscute_rambursate = ifelse(is.na(.[[2]]),-.[[3]],.[[4]] - .[[3]]),
                       Transferuri_stage3 = ifelse(.[[2]] == 3 & .[[1]] != 3,   .[[4]],  0),
@@ -117,8 +118,8 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
       
       # I get category of my new exposures categories
       vals_ifrs$tabel3_new_exposures_migration <- dplyr::left_join(x = portofoliu_perioada_curenta(),
-        y = dplyr::select( portofoliu_perioada_anterioara(),`Cod Partener`,!!rlang::sym(vals_ifrs$expunere_anterioara),
-            !!rlang::sym(vals_ifrs$stage_anterior)),by="Cod Partener") %>% 
+                                                                   y = dplyr::select( portofoliu_perioada_anterioara(),`Cod Partener`,!!rlang::sym(vals_ifrs$expunere_anterioara),
+                                                                                      !!rlang::sym(vals_ifrs$stage_anterior)),by="Cod Partener") %>% 
         dplyr::filter(is.na(!!rlang::sym(vals_ifrs$stage_anterior))) %>% 
         dplyr::group_by(!!rlang::sym(vals_ifrs$stage_curent)) %>% 
         dplyr::summarise(Acordate_efectuate_in_timpul_anului=sum(!!rlang::sym(vals_ifrs$expunere_curenta))) %>% 
@@ -127,7 +128,7 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
       
       # I produce my final migration_table
       vals_ifrs$tabel_migration_final <- dplyr::bind_rows(vals_ifrs$tabel1_migration,
-          vals_ifrs$tabel2_migration,vals_ifrs$tabel3_new_exposures_migration) %>% 
+                                                          vals_ifrs$tabel2_migration,vals_ifrs$tabel3_new_exposures_migration) %>% 
         dplyr::group_by(name) %>% 
         dplyr:: summarise_all(.funs = ~sum(.,na.rm=T)) %>% dplyr::slice(c(3,1,2,4:6)) %>% dplyr::mutate(Total=rowSums(.[2:4])) %>% 
         dplyr::bind_rows(apply(X = dplyr::select(.,-1),MARGIN = 2,FUN=sum)) %>% tidyr::replace_na(replace = list(name="Total")) %>% 
@@ -136,10 +137,12 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
       output$portfolio_migration <- DT::renderDataTable({
         req( nrow(portofoliu_perioada_curenta()) > 0, nrow(portofoliu_perioada_anterioara()) > 0)
         dt_generate_function(df=vals_ifrs$tabel_migration_final,
-            round_col = 2:5,show_buttons = TRUE,
-            caption = "Migratia portofoliului de garantii in functie de categoria contaminata a beneficiarului:")  })
-     
-    })
+                             round_col = 2:5,show_buttons = TRUE,
+                             caption = "Migratia portofoliului de garantii in functie de categoria contaminata a beneficiarului:")  })
+
+     })
+    
+    
     
      
     output$error_message <- renderUI( { req(any(nrow(portofoliu_perioada_curenta()) == 0, 
@@ -160,6 +163,7 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
                             " fata de ", input$migration_from_ifrs), show_buttons=TRUE)
     })
     
+  
     
   })
 }
