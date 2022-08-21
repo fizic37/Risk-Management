@@ -42,7 +42,7 @@ mod_admin_ui <- function(id){
     
     
     bs4Dash::box(title = "Dobanzi CRC", status = "info",width = 12, collapsible = T,
-                 collapsed = FALSE, maximizable = TRUE, icon = icon("dollar-sign"),
+                 collapsed = TRUE, maximizable = TRUE, icon = icon("dollar-sign"),
                  footer = "Dobanzile medii ale BNR se preiau din sectiunea Baza de date interactiva de pe site-ul bnr.ro -
                  Statistica monetara si financiara - Ratele dobanzii practicate de institutiile de credit - 
                  Credite existente in sold - Societati nefinanciare.",
