@@ -166,20 +166,9 @@ mod_crc_server <- function(input, output, session, vals){
   
   observeEvent(input$crc_input,{
     
-    rata_dobanzii <- readRDS("R/reactivedata/crc/rata_dobanzii.rds")
-    
-    
-    rata_dobanzii <- rata_dobanzii %>% dplyr::bind_rows(
-      rata_dobanzii %>% dplyr::filter(MONEDA == "EUR") %>% dplyr::mutate(dplyr::across(
-        .cols = c(MONEDA, valuta_termen, valuta_termen_data),
-        .fns = ~ stringr::str_replace_all(string = .x, pattern = "EUR", "NOK")
-      )) )
-    
     baza_date_crc_sliced <- readRDS("R/reactivedata/crc/baza_date_crc_sliced.rds")
     
-    ratele_dobanzii_valabile <-  rata_dobanzii %>% dplyr::select(2:4) %>% 
-      tidyr::pivot_wider(names_from = MONEDA,values_from = `Rata dobanzii`)
-    
+   
     crc_input_citit <- reactive({  shiny::validate(shiny::need(tools::file_ext(input$crc_input$datapath)=="csv",
                           message = paste0("CSV only. You uploaded a ",tools::file_ext(input$crc_input$datapath)," file.")))
       readr::read_csv(input$crc_input$datapath) })
@@ -210,10 +199,22 @@ mod_crc_server <- function(input, output, session, vals){
         dplyr::mutate(Principal_de_Rambursat = as.numeric(Principal_de_Rambursat)) })
     
     
-    crc_csv_rata_dobanzii <- reactive ({
+    rata_dobanzii <- eventReactive(crc_csv(),{
+      rata_dobanzii_first_read <- readRDS("R/reactivedata/crc/rata_dobanzii.rds") %>%
+        dplyr::mutate(valuta_termen = paste0(MONEDA,stringr::str_sub(`Termen acordare`, start = 1, end = 1) ) )
+      
+      rata_dobanzii_final <- rata_dobanzii_first_read %>% dplyr::filter(Data ==  
+        max(rata_dobanzii_first_read$Data[which(rata_dobanzii_first_read$Data <= crc_csv()$`Data situatie risc global`[1])]) )
+      
+      return( rata_dobanzii_final ) })
+     
+    
+    
+  
+    crc_csv_rata_dobanzii <- reactive ({ req(crc_csv(), rata_dobanzii())
         crc_csv() %>% dplyr::mutate(rata_dobanzii =
-                      rata_dobanzii$`Rata dobanzii`[match(x = crc_csv()$valuta_termen,
-                              table = rata_dobanzii$valuta_termen)]) %>%
+                      rata_dobanzii()$`Rata dobanzii`[match(x = crc_csv()$valuta_termen,
+                              table = rata_dobanzii()$valuta_termen)]) %>%
           dplyr::mutate(Dobanda_de_Rambursat = rata_dobanzii * (2 * `Suma datorata total` - Principal_de_Rambursat) / 2) %>%
           dplyr::mutate(Rate_datorate = Principal_de_Rambursat + Dobanda_de_Rambursat) })  
     
@@ -229,7 +230,9 @@ mod_crc_server <- function(input, output, session, vals){
     crc_final <-  reactive ({ dplyr::left_join(y = crc_cui() %>% dplyr::select(.,`Cod debitor`,
                         scor_serv_datorie,are_restante_peste_30_zile),  x=crc_csv_rata_dobanzii(),by="Cod debitor")   })
     
-    sumar_crc_upload <- reactive({ crc_final() %>% dplyr::group_by(`Cod debitor`, `Data situatie risc global`) %>% 
+    sumar_crc_upload <- reactive({  req(crc_final())
+      
+      crc_final() %>% dplyr::group_by(`Cod debitor`, `Data situatie risc global`) %>% 
         dplyr::summarise(Nr_beneficiari = dplyr::n_distinct(`Cod debitor`),
                          Total_rate_datorate =   sum(Rate_datorate),
                          Rate_medii_datorate = sum(Rate_datorate),
@@ -262,9 +265,12 @@ mod_crc_server <- function(input, output, session, vals){
                  icon = icon("save"), style = "stretch",color = "success",size = "sm")  })
     
     
-    output$dobanzi_crc <- DT::renderDataTable({req(sumar_crc_upload,vals_crc$check_type_crc)
-      dt_generate_function(df=ratele_dobanzii_valabile,perc_col = 2:ncol(ratele_dobanzii_valabile),
-                           digits_perc = 2, round_col = NULL,
+    output$dobanzi_crc <- DT::renderDataTable({req(sumar_crc_upload,vals_crc$check_type_crc, rata_dobanzii())
+   
+     dt_generate_function( df = rata_dobanzii() %>% dplyr::select(2:4) %>% 
+        tidyr::pivot_wider(names_from = MONEDA,values_from = `Rata dobanzii`),
+        perc_col = 2:(length(unique(rata_dobanzii()$MONEDA))+1),
+        digits_perc = 2, round_col = NULL,
           caption = "Voi folosi ratele dobanzii de mai jos pentru a calcula ratele datorate aferente fisierului uploadat:")     })
     
     output$down_crc_output <- renderUI({req(vals_crc$check_type_crc)

@@ -37,9 +37,17 @@ mod_admin_ui <- function(id){
     
     bs4Dash::box(title = "Scenarii de evolutie macroeconomica", status = "info",width = 12, collapsible = T,
                  collapsed = TRUE, maximizable = TRUE, icon = icon("chart-area"),id = ns("box_admin_scenarii"),
-                 mod_admin_scenarii_ui("admin_scenarii_1") )
+                 mod_admin_scenarii_ui("admin_scenarii_1") ),
     
-  )
+    
+    
+    bs4Dash::box(title = "Dobanzi CRC", status = "info",width = 12, collapsible = T,
+                 collapsed = FALSE, maximizable = TRUE, icon = icon("dollar-sign"),
+                 footer = "Dobanzile medii ale BNR se preiau din sectiunea Baza de date interactiva de pe site-ul bnr.ro -
+                 Statistica monetara si financiara - Ratele dobanzii practicate de institutiile de credit - 
+                 Credite existente in sold - Societati nefinanciare.",
+                 id = ns("box_admin_dobanzi_crc"), mod_admin_dobanzi_crc_ui("admin_dobanzi_crc_1") )
+    )
   
 }
     
@@ -55,6 +63,8 @@ mod_admin_server <- function(id, vals){
     
     observeEvent(input$box_admin_scenarii,{ vals$box_selected <- c(vals$box_selected, "box_admin_scenarii") })
     
+    observeEvent(input$box_admin_scenarii,{ vals$box_selected <- c(vals$box_selected, "box_admin_dobanzi_crc") })
+    
     observeEvent(input$upload_doc,{ shiny::validate( shiny::need(expr = tools::file_ext(input$upload_doc$datapath) == "docx",
                                   message = "Docx only") )
       file.copy(from = input$upload_doc$datapath, to = "R/reactivedata/template_provizioane_plati.docx",overwrite = TRUE)
@@ -63,7 +73,8 @@ mod_admin_server <- function(id, vals){
     })
     
     output$down_doc <- downloadHandler(filename = function() {"template_provizioane_plati.docx"},
-            content = function(file) {file.copy(from = "R/reactivedata/template_provizioane_plati.docx",to = file, overwrite = TRUE ) } )
+            content = function(file) {file.copy(from = "R/reactivedata/template_provizioane_plati.docx",
+                                                to = file, overwrite = TRUE ) } )
     
     
   })

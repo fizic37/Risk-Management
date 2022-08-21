@@ -38,6 +38,7 @@ app_server <- function( input, output, session ) {
       vals$sidebar_selected <- c(vals$sidebar_selected,"solduri")   }
     
     if (sum("crc" == vals$sidebar_selected)==1) {
+      
       callModule(mod_crc_server, "crc_ui_1", vals)
       vals$sidebar_selected <- c(vals$sidebar_selected,"crc")   }
     
@@ -112,6 +113,12 @@ app_server <- function( input, output, session ) {
       mod_admin_scenarii_server("admin_scenarii_1")
       
       vals$box_selected <- c(vals$box_selected, "box_admin_scenarii") }
+    
+    if ( sum("box_admin_dobanzi_crc" == vals$box_selected)==1 ) { 
+      
+      mod_admin_dobanzi_crc_server("admin_dobanzi_crc_1")
+      
+      vals$box_selected <- c(vals$box_selected, "box_admin_dobanzi_crc") }
     
     
     
