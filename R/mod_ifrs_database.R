@@ -82,8 +82,8 @@ mod_ifrs_database_server <- function( id, database_ifrs ){
       database_ifrs %>% dplyr::filter(data_raport == vals_ifrs_database$data_raport)
     })
     
-    output$down_ifrs_database <- downloadHandler( filename = function(){paste0("IFRS9_",vals_ifrs_database$data_raport)},
-                  content = function(file) {readr::write_csv(x = database_selected(),file = file ) } )
+    output$down_ifrs_database <- downloadHandler( filename = function(){paste0("IFRS9_",vals_ifrs_database$data_raport,
+            ".csv")}, content = function(file) {readr::write_csv(x = database_selected(),file = file ) } )
     
     coeficienti_folositi <- eventReactive( vals_ifrs_database$data_raport,{
       readRDS("R/reactivedata/ifrs/coeficienti_folositi.rds") %>% 
