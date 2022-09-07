@@ -130,7 +130,7 @@ mod_provizioane_plati_server <- function(input, output, session,vals, plati_reac
   })
   
   # Observer for button delete inside datatable for baza plati
-  observeEvent(input$data_raport_to_delete,{
+  observeEvent(input$data_raport_to_delete,{ req( vals$user_type != "guest")
     
     showModal(modalDialog(title = "STOP", size = "l",
                           h3(paste0("Esti sigur ca vrei sa stergi provizioanele specifice la data de ",
@@ -157,7 +157,7 @@ mod_provizioane_plati_server <- function(input, output, session,vals, plati_reac
   })
   
   # Observer for download button inside datatable baza plati
-  observeEvent(input$data_raport_to_download,{
+  observeEvent(input$data_raport_to_download,{ req( vals$user_type != "guest")
     
     showModal(modalDialog(title = "STOP", size = "l",
                           h3(paste0("Esti sigur ca vrei sa downloadezi provizioanele specifice la data de ",

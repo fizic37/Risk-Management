@@ -183,7 +183,7 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
   })
   
   
-  observeEvent(input$data_raport_to_download,{
+  observeEvent(input$data_raport_to_download,{ req(vals$user_type != "guest")
     
     showModal(modalDialog(title = h3("ATENTIE!",style = "color: #ffa500;"), size = "l",
                           h3(paste0("Esti sigur ca vrei sa downloadez portofoliul la data de ",
@@ -206,10 +206,10 @@ mod_database_portofoliu_server <- function(input, output, session,vals,vals_port
   })
   
   # Remove modal on cancel download button
-  observeEvent(input$cancel_download,{
+  observeEvent(input$cancel_download,{ 
     removeModal(session = session)  })
   
-  observeEvent(input$data_raport_to_delete,{
+  observeEvent(input$data_raport_to_delete,{ req(vals$user_type != "guest")
     
     showModal(modalDialog(title = h3("ATENTIE!",style = "color: #ffa500;"), size = "l",
                           h3(paste0("Esti sigur ca vrei sa stergi portofoliul la data de ",

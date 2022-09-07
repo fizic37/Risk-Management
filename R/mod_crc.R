@@ -83,7 +83,7 @@ mod_crc_server <- function(input, output, session, vals){
           caption = "Sinteza baza date CRC:" )    })
     })
   
-  observeEvent(input$data_raport_to_delete,{
+  observeEvent(input$data_raport_to_delete,{ req(vals$user_type != "guest")
     showModal(modalDialog(title = div(style="display:inline-block;margin-left: 5%;color: #c99720;",
                                       "ATENTIE"), size = "l",
                           h3(paste0("Esti sigur ca vrei sa stergi inregistrarile CRC din data de ",
@@ -133,7 +133,7 @@ mod_crc_server <- function(input, output, session, vals){
       
   })
   
-  observeEvent(input$data_raport_to_download,{
+  observeEvent(input$data_raport_to_download,{ req(vals$user_type != "guest")
     
     showModal(modalDialog(title = div(style="display:inline-block;margin-left: 10%;color: #c99720;",
                                       "ATENTIE"), size = "l",
@@ -164,7 +164,7 @@ mod_crc_server <- function(input, output, session, vals){
   output$error_messages <- renderUI( div (style="display:inline-block;margin-left: 10%;padding-top: 5px;color: #20a7c9;", 
   "Se uploadeaza fisierul CRC din Charisma - General - Rapoarte - CRC - Ris Global F4CRED - Data situatie risc global - Salveaza rapid CSV." ) )
   
-  observeEvent(input$crc_input,{
+  observeEvent(input$crc_input,{ req(vals$user_type != "guest")
     
     baza_date_crc_sliced <- readRDS("R/reactivedata/crc/baza_date_crc_sliced.rds")
     

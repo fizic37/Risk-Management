@@ -33,6 +33,7 @@ Imports:
     shinyFeedback,
     shinyjs,
     shinyWidgets,
+    sodium,
     stringr,
     tibble,
     tidyr

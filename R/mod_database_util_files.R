@@ -95,7 +95,7 @@ mod_database_util_files_server <- function(input, output, session){
   
   
   
-  observeEvent(input$bi_input,{
+  observeEvent(input$bi_input,{ req(vals$user_type != "guest")
     
     #BI cereri plata 
     bi_citit_cereri_plata <- reactive({ shiny::validate(shiny::need(tools::file_ext(input$bi_input$datapath) == "xlsx", 
@@ -169,7 +169,7 @@ mod_database_util_files_server <- function(input, output, session){
   })
   
   
-  observeEvent(input$insolventa_input,{
+  observeEvent(input$insolventa_input,{ req(vals$user_type != "guest")
     
     insolventa_prima_citire <- reactive({ readr::read_csv(input$insolventa_input$datapath) })
     
@@ -209,7 +209,7 @@ mod_database_util_files_server <- function(input, output, session){
       
   })
   
-  observeEvent(input$bi_cui,{
+  observeEvent(input$bi_cui,{ req(vals$user_type != "guest")
     bi_cui_existent <- readRDS("R/reactivedata/bi_cui.rds")
     vals$bi_cui <- readxl::read_excel(path = input$bi_cui$datapath,sheet = "cod_partener",skip = 4)
     

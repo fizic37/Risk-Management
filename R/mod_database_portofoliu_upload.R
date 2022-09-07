@@ -42,7 +42,7 @@ mod_database_portofoliu_upload_ui <- function(id){
 #' database_portofoliu_upload Server Function
 #'
 #' @noRd 
-mod_database_portofoliu_upload_server <- function(input, output, session,vals_portofoliu) {
+mod_database_portofoliu_upload_server <- function(input, output, session,vals_portofoliu, vals) {
   ns <- session$ns
   
  threshold_date_input <- as.Date("2019-12-31")
@@ -55,7 +55,7 @@ mod_database_portofoliu_upload_server <- function(input, output, session,vals_po
                 "Soldul garantiei [in LEI]"="numeric", "Procentul de garantare"="numeric","ID Document" ="numeric"))
               
   
-  observeEvent(input$sold,{
+  observeEvent(input$sold,{ req(vals$user_type != "guest")
     
     vals_portof_upload$file_input = input$sold$datapath
     

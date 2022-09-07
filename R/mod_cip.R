@@ -38,7 +38,7 @@ mod_cip_ui <- function(id){
 #' cip Server Function
 #'
 #' @noRd 
-mod_cip_server <- function(input, output, session) {
+mod_cip_server <- function(input, output, session, vals) {
   ns <- session$ns
  
   
@@ -71,7 +71,7 @@ mod_cip_server <- function(input, output, session) {
     })
   
 
-  observeEvent(input$id_data_raport_to_download,{
+  observeEvent(input$id_data_raport_to_download,{ req(vals$user_type != "guest")
      
     showModal(modalDialog(title = div(style="display:inline-block;margin-left: 10%;color: #c99720;",
                                       "ATENTIE"),size = "l",
@@ -101,7 +101,7 @@ mod_cip_server <- function(input, output, session) {
     
     })
   
-  observeEvent(input$id_data_raport_to_delete,{
+  observeEvent(input$id_data_raport_to_delete,{ req(vals$user_type != "guest")
     
     showModal(modalDialog(title = div(style="display:inline-block;margin-left: 5%;color: #c99720;",
                                       "ATENTIE"), size = "l",
@@ -152,7 +152,7 @@ mod_cip_server <- function(input, output, session) {
   # Observer for CIP upload. I have used reactive() so save upload observer is nested inside upload observer in order to 
  # have access to values stored with reactive(). 
   
-  observeEvent(input$cip_input,{
+  observeEvent(input$cip_input,{ req(vals$user_type != "guest")
    
     check_cip_names <- reactive( { req(input$cip_input)
       nume_citite <- names(readr::read_csv(input$cip_input$datapath,n_max = 10))

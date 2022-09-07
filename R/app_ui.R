@@ -10,12 +10,17 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic 
     bs4Dash::dashboardPage(title = "Riskmanagament",
-                              header = bs4Dash::dashboardHeader(title = "Risk Management"),
-                              sidebar = bs4Dash::bs4DashSidebar(mod_sidebar_ui("sidebar_ui_1"), 
+                              header = bs4Dash::dashboardHeader(title = "Risk Management",
+                                                rightUi = bs4Dash::userOutput("users")),
+                              
+                           sidebar = bs4Dash::bs4DashSidebar(mod_sidebar_ui("sidebar_ui_1"), 
                                                   status = "teal",skin = "light"),
                               footer = bs4Dash::bs4DashFooter(left = "Developed by Tita Marius for FNGCIMM"),
                               
-                              body = bs4Dash::bs4DashBody( bs4Dash::tabItems(
+                              body = bs4Dash::bs4DashBody( 
+                                mod_login_ui("login_ui_1"),
+                                
+                                bs4Dash::tabItems(
                                 
                                 bs4Dash::tabItem(tabName = "home",mod_home_ui("home_ui_1") ),
                                 

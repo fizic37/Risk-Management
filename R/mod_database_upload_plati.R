@@ -36,7 +36,7 @@ mod_database_upload_plati_ui <- function(id){
 #' database_upload_plati Server Function
 #'
 #' @noRd 
-mod_database_upload_plati_server <- function(input, output, session, plati_reactive) {
+mod_database_upload_plati_server <- function(input, output, session, plati_reactive, vals) {
   ns <- session$ns
   
   # Below threshold represents the date before which I do not allow saving plati input
@@ -63,7 +63,7 @@ mod_database_upload_plati_server <- function(input, output, session, plati_react
   
  
    # Observer for plati file input
-  observeEvent(input$plati_input,{
+  observeEvent(input$plati_input,{ req(vals$user_type != "guest")
       shiny::validate(shiny::need(any(tools::file_ext(input$plati_input$datapath) %in% c("xls", "xlsx")),
           message = paste0("Excel only, you uploaded a ",  tools::file_ext(input$plati_input$datapath)," file")))
     

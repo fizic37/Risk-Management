@@ -41,7 +41,10 @@ mod_sidebar_server <- function(id, vals){
       
     )
     
-    output$sidebar <- bs4Dash::renderMenu(risk_user_sidebar)
+    no_user <- bs4Dash::sidebarMenu()
+    
+    output$sidebar <- bs4Dash::renderMenu(
+      if( is.null(vals$user_type) ) {no_user} else { risk_user_sidebar } )
     
    
     observeEvent(input$tabs,{ vals$sidebar_selected <- c(vals$sidebar_selected,input$tabs)

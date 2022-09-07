@@ -6,10 +6,16 @@
 #' @noRd
 app_server <- function( input, output, session ) {
   
+  login <- FALSE
+  
   sidebar_selected <- c()
   box_selected <- c()
-  vals <- reactiveValues(sidebar_selected = sidebar_selected, box_selected = box_selected)
+  
+  vals <- reactiveValues(login = login, sidebar_selected = sidebar_selected, box_selected = box_selected)
+  
   plati_reactive <- reactiveValues()
+  
+  mod_login_server("login_ui_1", vals)
   
   view1_portofoliu <- readRDS("R/reactivedata/portofoliu/view1_portofoliu.rds")
   view2_portofoliu <- readRDS("R/reactivedata/portofoliu/view2_portofoliu.rds")
@@ -20,6 +26,13 @@ app_server <- function( input, output, session ) {
                    view3_portofoliu = view3_portofoliu, view4_portofoliu = view4_portofoliu)
  
   mod_sidebar_server("sidebar_ui_1", vals)
+  
+  output$users <- bs4Dash::renderUser({ req(vals$login==TRUE)
+    paste0(vals$user_name, " - ", vals$user_type)
+    # bs4Dash::dashboardUser(name = paste0(vals$user_name, " - ", vals$user_type),
+    #                        image = "inst/app/www/my_image.tif", status = "info")
+    
+  })
   
   observeEvent(vals$sidebar_selected,{
     
@@ -61,7 +74,7 @@ app_server <- function( input, output, session ) {
   observeEvent(vals$box_selected,{
     
     if ( sum("box_upload_plati" == vals$box_selected)==1 ) { 
-      callModule(mod_database_upload_plati_server, "database_upload_plati_ui_1", plati_reactive)
+      callModule(mod_database_upload_plati_server, "database_upload_plati_ui_1", plati_reactive, vals)
       vals$box_selected <- c(vals$box_selected, "box_upload_plati") }
     
     if ( sum("box_coeficienti_plati" == vals$box_selected)==1 ) { 
@@ -78,7 +91,7 @@ app_server <- function( input, output, session ) {
     
     if ( sum("box_upload_portofoliu" == vals$box_selected)==1 ) { 
       
-      callModule(mod_database_portofoliu_upload_server, "database_portofoliu_upload_ui_1", vals_portofoliu)
+      callModule(mod_database_portofoliu_upload_server, "database_portofoliu_upload_ui_1", vals_portofoliu, vals)
       
       vals$box_selected <- c(vals$box_selected, "box_upload_portofoliu") }
     
@@ -98,7 +111,7 @@ app_server <- function( input, output, session ) {
     
     if ( sum("box_cip" == vals$box_selected)==1 ) { 
       
-      callModule(mod_cip_server, "cip_ui_1")
+      callModule(mod_cip_server, "cip_ui_1", vals)
       
       vals$box_selected <- c(vals$box_selected, "box_cip") }
     
