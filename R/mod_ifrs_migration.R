@@ -39,6 +39,7 @@ mod_ifrs_migration_server <- function(id, database_ifrs, ifrs_dates ){
     
     vals_ifrs <- reactiveValues()
     
+    # Below observer does not work, produces errors
     # observeEvent(ifrs_dates,{
     # 
     #   shinyWidgets::updateAirDateInput(session = session,inputId = "migration_from_ifrs",
